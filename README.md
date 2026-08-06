@@ -18,6 +18,11 @@ Other available commands:
 
 After startup, open `https://localhost`.
 
+For a phone connected to the same Wi-Fi, set `STOCKFLOW_LAN_HOST` in the ignored
+production environment file to the computer's LAN IP, install the Caddy local
+root certificate on the device, and open the corresponding HTTPS address. Allow
+inbound TCP 443 only on private network profiles.
+
 Local-first, cloud-ready warehouse management for small and medium businesses.
 
 ## Current first slice

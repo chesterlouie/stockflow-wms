@@ -1,4 +1,4 @@
-localhost {
+localhost, {$STOCKFLOW_LAN_HOST:localhost} {
 	tls internal
 	encode zstd gzip
 	header {

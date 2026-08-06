@@ -48,6 +48,11 @@ function Show-Status {
 }
 function Start-StockFlow {
   foreach($required in @($node,(Join-Path $pgBin 'pg_ctl.exe'),$pgData,$caddy,$envFile)){if(-not(Test-Path -LiteralPath $required)){throw "Required StockFlow component is missing: $required"}}
+  Get-Content -LiteralPath $envFile | ForEach-Object {
+    if($_ -match '^\s*([^#=]+)=(.*)$'){
+      [Environment]::SetEnvironmentVariable($matches[1].Trim(),$matches[2].Trim(),'Process')
+    }
+  }
   if(-not(Get-PortProcessId 5432)){
     Write-Output 'Starting database...'
     & (Join-Path $pgBin 'pg_ctl.exe') start -D $pgData -l $pgLog -w
