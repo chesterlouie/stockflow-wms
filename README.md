@@ -1,5 +1,23 @@
 # StockFlow WMS
 
+## Local service command
+
+From the StockFlow project folder on Windows:
+
+```powershell
+.\stockflow.cmd start
+```
+
+Other available commands:
+
+```powershell
+.\stockflow.cmd status
+.\stockflow.cmd restart
+.\stockflow.cmd stop
+```
+
+After startup, open `https://localhost`.
+
 Local-first, cloud-ready warehouse management for small and medium businesses.
 
 ## Current first slice
