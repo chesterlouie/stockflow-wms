@@ -14,6 +14,7 @@ const migrations = [
   ["006_erp_integrations", new URL("../database/migrations/006_erp_integrations.sql", import.meta.url)],
   ["007_access_security", new URL("../database/migrations/007_access_security.sql", import.meta.url)],
   ["008_platform_administration", new URL("../database/migrations/008_platform_administration.sql", import.meta.url)],
+  ["009_subscription_billing", new URL("../database/migrations/009_subscription_billing.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
