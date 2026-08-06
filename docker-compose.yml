@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: stockflow
+      POSTGRES_USER: stockflow_admin
+      POSTGRES_PASSWORD: stockflow_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - stockflow_postgres:/var/lib/postgresql/data
+      - ./database/bootstrap.sql:/docker-entrypoint-initdb.d/000-bootstrap.sql:ro
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockflow_admin -d stockflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  stockflow_postgres:

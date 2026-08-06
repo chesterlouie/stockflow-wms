@@ -1,0 +1,10 @@
+{
+  "name":"StockFlow Warehouse Management",
+  "short_name":"StockFlow",
+  "description":"Mobile warehouse receiving, picking, counting, and inventory control.",
+  "start_url":"/app/dashboard",
+  "display":"standalone",
+  "background_color":"#f4f7f5",
+  "theme_color":"#087f5b",
+  "icons":[{"src":"/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

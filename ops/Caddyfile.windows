@@ -1,0 +1,18 @@
+localhost {
+	tls internal
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+	}
+	handle /assets/* {
+		root * C:/A_Tools/Projects/stockflow-wms/dist/client
+		file_server
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3100
+	}
+}

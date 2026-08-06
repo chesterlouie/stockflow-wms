@@ -1,0 +1,4 @@
+import { getSession } from "../../../../lib/auth";
+import { postTransfer } from "../../../../lib/inventory";
+import { transferSchema } from "../../../../lib/validation";
+export async function POST(request:Request){const session=await getSession();if(!session)return Response.redirect(new URL('/signin',request.url),303);if(!['owner','admin','manager','operator'].includes(session.role))return new Response('Forbidden',{status:403});const parsed=transferSchema.safeParse(Object.fromEntries(await request.formData()));if(!parsed.success)return Response.redirect(new URL('/app/inventory/transfer?error=invalid',request.url),303);try{await postTransfer(session,parsed.data);return Response.redirect(new URL('/app/inventory?transferred=1',request.url),303)}catch(error){const code=error instanceof Error?error.message:'failed';return Response.redirect(new URL(`/app/inventory/transfer?error=${code.toLowerCase()}`,request.url),303)}}

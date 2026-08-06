@@ -1,0 +1,2 @@
+import { db } from "../../../lib/db";
+export async function GET(){try{const result=await db().query<{version:string}>(`SELECT version FROM schema_migrations ORDER BY applied_at DESC LIMIT 1`);return Response.json({service:'stockflow-wms',status:'ready',database:'connected',migration:result.rows[0]?.version||'none',timestamp:new Date().toISOString()})}catch{return Response.json({service:'stockflow-wms',status:'not_ready',database:'unavailable'},{status:503})}}

@@ -1,0 +1,32 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import pg from "pg";
+
+const connectionString = process.env.DATABASE_ADMIN_URL;
+if (!connectionString) throw new Error("DATABASE_ADMIN_URL is required");
+const bootstrap = await readFile(new URL("../database/bootstrap.sql", import.meta.url), "utf8");
+const migrations = [
+  ["001_initial", new URL("../database/schema.sql", import.meta.url)],
+  ["002_inventory_controls", new URL("../database/migrations/002_inventory_controls.sql", import.meta.url)],
+  ["003_receiving_putaway", new URL("../database/migrations/003_receiving_putaway.sql", import.meta.url)],
+  ["004_outbound_orders", new URL("../database/migrations/004_outbound_orders.sql", import.meta.url)],
+  ["005_inventory_counts", new URL("../database/migrations/005_inventory_counts.sql", import.meta.url)],
+  ["006_erp_integrations", new URL("../database/migrations/006_erp_integrations.sql", import.meta.url)],
+  ["007_access_security", new URL("../database/migrations/007_access_security.sql", import.meta.url)],
+  ["008_platform_administration", new URL("../database/migrations/008_platform_administration.sql", import.meta.url)],
+];
+const client = new pg.Client({ connectionString });
+await client.connect();
+try {
+  await client.query(bootstrap);
+  await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())`);
+  for (const [version,url] of migrations) {
+    const sql=await readFile(url,"utf8");
+    const checksum=createHash("sha256").update(sql).digest("hex");
+    const existing=await client.query("SELECT checksum FROM schema_migrations WHERE version=$1",[version]);
+    if(existing.rows[0]){if(existing.rows[0].checksum!==checksum)throw new Error(`Migration ${version} was changed after being applied`);continue}
+    await client.query("BEGIN");
+    try{await client.query(sql);await client.query("INSERT INTO schema_migrations(version,checksum) VALUES($1,$2)",[version,checksum]);await client.query("COMMIT");console.log(`Applied migration ${version}.`)}catch(error){await client.query("ROLLBACK");throw error}
+  }
+  console.log("Database is current.");
+} finally { await client.end(); }

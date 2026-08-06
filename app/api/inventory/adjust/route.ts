@@ -1,0 +1,4 @@
+import { getSession } from "../../../../lib/auth";
+import { postAdjustment } from "../../../../lib/inventory";
+import { adjustmentSchema } from "../../../../lib/validation";
+export async function POST(request:Request){const session=await getSession();if(!session)return Response.redirect(new URL('/signin',request.url),303);if(!['owner','admin','manager'].includes(session.role))return new Response('Forbidden',{status:403});const parsed=adjustmentSchema.safeParse(Object.fromEntries(await request.formData()));if(!parsed.success)return Response.redirect(new URL('/app/inventory/adjust?error=invalid',request.url),303);try{await postAdjustment(session,parsed.data);return Response.redirect(new URL('/app/inventory?adjusted=1',request.url),303)}catch(error){const code=error instanceof Error?error.message:'failed';return Response.redirect(new URL(`/app/inventory/adjust?error=${code.toLowerCase()}`,request.url),303)}}
