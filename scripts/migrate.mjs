@@ -24,6 +24,7 @@ const migrations = [
   ["016_receiving_controls", new URL("../database/migrations/016_receiving_controls.sql", import.meta.url)],
   ["017_purchasing", new URL("../database/migrations/017_purchasing.sql", import.meta.url)],
   ["018_putaway_replenishment", new URL("../database/migrations/018_putaway_replenishment.sql", import.meta.url)],
+  ["019_outbound_fulfillment", new URL("../database/migrations/019_outbound_fulfillment.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
