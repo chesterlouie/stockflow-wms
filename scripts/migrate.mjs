@@ -15,6 +15,8 @@ const migrations = [
   ["007_access_security", new URL("../database/migrations/007_access_security.sql", import.meta.url)],
   ["008_platform_administration", new URL("../database/migrations/008_platform_administration.sql", import.meta.url)],
   ["009_subscription_billing", new URL("../database/migrations/009_subscription_billing.sql", import.meta.url)],
+  ["010_paymongo_subscriptions", new URL("../database/migrations/010_paymongo_subscriptions.sql", import.meta.url)],
+  ["011_access_freeze_ownership", new URL("../database/migrations/011_access_freeze_ownership.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();

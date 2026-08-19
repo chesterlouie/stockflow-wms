@@ -16,7 +16,8 @@
     "db:verify": "node --env-file=.env.local scripts/verify-database.mjs",
     "db:configure-role": "node scripts/configure-app-role.mjs",
     "config:validate": "node scripts/validate-production-env.mjs",
-    "test:e2e": "node --env-file=.env.local scripts/e2e-smoke.mjs"
+    "test:e2e": "node --env-file=.env.local scripts/e2e-smoke.mjs",
+    "test:billing": "node --env-file=.env.production --test tests/paymongo-webhook.test.mjs"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.1",
