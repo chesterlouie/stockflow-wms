@@ -38,10 +38,11 @@ export default function MobileRuntime() {
     addEventListener("beforeinstallprompt", before);
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
-    const enhance = () => document.querySelectorAll<HTMLInputElement>('input[name="barcode"],input[name="locationCode"]').forEach((input) => {
+    const enhance = () => document.querySelectorAll<HTMLInputElement>('input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"]').forEach((input) => {
       if (input.dataset.mobileScan) return;
       input.dataset.mobileScan = "1";
       const form = input.form;
+      if (input.name === "receiptBarcode" && form) form.action = form.action.replace(/\/inspect$/, "/mobile-inspect");
       const key = `stockflow-draft:${form?.getAttribute("action") || location.pathname}:${input.name}`;
       const saved = localStorage.getItem(key);
       if (saved && !input.value) input.value = saved;
