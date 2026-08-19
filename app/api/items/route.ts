@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.redirect(new URL("/app/items/new?error=invalid",request.url),303);
   try {
     await withTenant(session.companyId, async (client) => {
-      const item = (await client.query<{id:string}>(`INSERT INTO items(company_id,sku,description,category,base_uom,tracking_method,allocation_method,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, [session.companyId,parsed.data.sku,parsed.data.name,parsed.data.category||null,parsed.data.uom,parsed.data.tracking,parsed.data.allocation,parsed.data.status])).rows[0];
+      const item = (await client.query<{id:string}>(`INSERT INTO items(company_id,sku,description,category,base_uom,tracking_method,allocation_method,status,over_receipt_tolerance_percent,minimum_shelf_life_days) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`, [session.companyId,parsed.data.sku,parsed.data.name,parsed.data.category||null,parsed.data.uom,parsed.data.tracking,parsed.data.allocation,parsed.data.status,parsed.data.overReceiptTolerance,parsed.data.minimumShelfLifeDays])).rows[0];
       let barcode = parsed.data.barcode;
       if (parsed.data.barcodeMode === "auto") {
         const sequence = (await client.query<{prefix:string;issued:number;pad_length:number}>(`UPDATE barcode_sequences SET next_value=next_value+1 WHERE company_id=$1 RETURNING prefix,next_value-1 AS issued,pad_length`,[session.companyId])).rows[0];

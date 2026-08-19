@@ -22,6 +22,8 @@ export const itemSchema = z.object({
   format: z.enum(["code128", "ean13", "upca", "qr", "gs1"]),
   tracking: z.enum(["none", "lot", "lot_expiry", "serial"]),
   allocation: z.enum(["fifo", "fefo", "lifo"]),
+  overReceiptTolerance: z.coerce.number().min(0).max(100).default(0),
+  minimumShelfLifeDays: z.coerce.number().int().min(0).max(3650).default(0),
 }).refine((value) => value.barcodeMode === "auto" || Boolean(value.barcode), { message: "A barcode is required in manual mode", path: ["barcode"] });
 
 export const locationSchema = z.object({
@@ -73,7 +75,7 @@ export const adjustmentSchema = z.object({
 });
 
 export const inboundReceiptSchema=z.object({warehouseId:z.string().uuid(),receiptNo:z.string().trim().min(1).max(50),supplier:z.string().trim().min(2).max(150),externalReference:z.string().trim().max(100).optional(),expectedDate:z.string().optional(),itemId:z.string().uuid(),expectedQuantity:z.coerce.number().positive(),uom:z.string().trim().min(1).max(20)});
-export const inspectionSchema=z.object({lineId:z.string().uuid(),receivingLocationId:z.string().uuid(),holdLocationId:z.string().uuid().optional(),damagedLocationId:z.string().uuid().optional(),putawayLocationId:z.string().uuid(),acceptedQuantity:z.coerce.number().min(0),heldQuantity:z.coerce.number().min(0),damagedQuantity:z.coerce.number().min(0),lotNumber:z.string().trim().max(100).optional(),expiryDate:z.string().optional()}).refine(v=>v.acceptedQuantity+v.heldQuantity+v.damagedQuantity>0);
+export const inspectionSchema=z.object({lineId:z.string().uuid(),receivingLocationId:z.string().uuid(),holdLocationId:z.string().uuid().optional(),damagedLocationId:z.string().uuid().optional(),putawayLocationId:z.string().uuid(),acceptedQuantity:z.coerce.number().min(0),heldQuantity:z.coerce.number().min(0),damagedQuantity:z.coerce.number().min(0),lotNumber:z.string().trim().max(100).optional(),expiryDate:z.string().optional(),serialNumbers:z.string().trim().max(20000).optional()}).refine(v=>v.acceptedQuantity+v.heldQuantity+v.damagedQuantity>0);
 
 export const salesOrderSchema=z.object({warehouseId:z.string().uuid(),orderNo:z.string().trim().min(1).max(50),customer:z.string().trim().min(2).max(150),requestedShipDate:z.string().optional(),priority:z.enum(['low','normal','high','urgent']),itemId:z.string().uuid(),quantity:z.coerce.number().positive().max(999999999),uom:z.string().trim().min(1).max(20)});
 export const pickConfirmationSchema=z.object({locationCode:z.string().trim().min(1).max(50).transform(v=>v.toUpperCase()),barcode:z.string().trim().min(1).max(120)});

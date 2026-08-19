@@ -21,6 +21,7 @@ const migrations = [
   ["013_password_recovery", new URL("../database/migrations/013_password_recovery.sql", import.meta.url)],
   ["014_email_verification", new URL("../database/migrations/014_email_verification.sql", import.meta.url)],
   ["015_two_factor_authentication", new URL("../database/migrations/015_two_factor_authentication.sql", import.meta.url)],
+  ["016_receiving_controls", new URL("../database/migrations/016_receiving_controls.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
