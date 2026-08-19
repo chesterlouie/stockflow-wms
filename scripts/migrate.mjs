@@ -19,6 +19,7 @@ const migrations = [
   ["011_access_freeze_ownership", new URL("../database/migrations/011_access_freeze_ownership.sql", import.meta.url)],
   ["012_secure_user_invitations", new URL("../database/migrations/012_secure_user_invitations.sql", import.meta.url)],
   ["013_password_recovery", new URL("../database/migrations/013_password_recovery.sql", import.meta.url)],
+  ["014_email_verification", new URL("../database/migrations/014_email_verification.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
