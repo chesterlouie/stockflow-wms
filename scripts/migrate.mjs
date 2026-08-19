@@ -17,6 +17,7 @@ const migrations = [
   ["009_subscription_billing", new URL("../database/migrations/009_subscription_billing.sql", import.meta.url)],
   ["010_paymongo_subscriptions", new URL("../database/migrations/010_paymongo_subscriptions.sql", import.meta.url)],
   ["011_access_freeze_ownership", new URL("../database/migrations/011_access_freeze_ownership.sql", import.meta.url)],
+  ["012_secure_user_invitations", new URL("../database/migrations/012_secure_user_invitations.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();

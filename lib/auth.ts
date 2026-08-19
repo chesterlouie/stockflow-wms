@@ -1,19 +1,10 @@
 import { cookies } from "next/headers";
 import { db } from "./db";
+import { hashToken, randomToken } from "./tokens";
 
 const COOKIE_NAME = "stockflow_session";
 const MAX_AGE_SECONDS = 60 * 60 * 12;
 export type Session = { userId: string; companyId: string; email: string; role: string; mustChangePassword?: boolean };
-
-function randomToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function hashToken(token: string) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
 
 export async function createSession(session: Session) {
   const token = randomToken();
