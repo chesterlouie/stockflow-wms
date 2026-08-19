@@ -2,6 +2,7 @@ import { compare } from "bcryptjs";
 import { createSession,sessionCookie } from "../../../../lib/auth";
 import { db,withTenant } from "../../../../lib/db";
 import { signinSchema } from "../../../../lib/validation";
+import { hashToken, randomToken } from "../../../../lib/tokens";
 
 export async function POST(request:Request){
   const parsed=signinSchema.safeParse(Object.fromEntries(await request.formData()));
@@ -14,6 +15,8 @@ export async function POST(request:Request){
   const accessEnded=user.subscription_ends_at&&Date.parse(user.subscription_ends_at)<Date.now();
   if((user.access_status==='frozen'||accessEnded)&&!user.is_platform_admin)return Response.redirect(new URL('/signin?error=company',request.url),303);
   await db().query(`DELETE FROM login_throttles WHERE email=$1`,[parsed.data.email]);
+  const mfa=(await db().query<{enabled:boolean}>('SELECT enabled FROM user_mfa WHERE user_id=$1',[user.id])).rows[0];
+  if(mfa?.enabled){const challenge=randomToken();await db().query(`INSERT INTO mfa_login_challenges(token_hash,user_id,company_id,expires_at) VALUES($1,$2,$3,now()+interval '5 minutes')`,[await hashToken(challenge),user.id,user.company_id]);return new Response(null,{status:303,headers:{Location:new URL('/two-factor',request.url).toString(),'Set-Cookie':`warevanta_mfa=${challenge}; Path=/; HttpOnly; SameSite=Strict; Max-Age=300${process.env.NODE_ENV==='production'?'; Secure':''}`}})}
   const token=await createSession({userId:user.id,companyId:user.company_id,email:parsed.data.email,role:user.role});
   await withTenant(user.company_id,c=>c.query(`INSERT INTO audit_logs(company_id,user_id,action,entity_type,entity_id) VALUES($1,$2,'signin','session',$3)`,[user.company_id,user.id,user.id]));
   const target=user.must_change_password?'/account/password':user.is_platform_admin?'/admin':'/app/dashboard';

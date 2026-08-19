@@ -4,7 +4,7 @@ import { getSession } from "../../lib/auth";
 import { db } from "../../lib/db";
 
 export const dynamic = "force-dynamic";
-const links=[['/app/dashboard','⌂','Dashboard'],['/app/items','□','Item master'],['/app/receiving','⇩','Receiving'],['/app/orders','⇧','Orders & picking'],['/app/inventory','⇄','Inventory'],['/app/counts','✓','Counts'],['/app/reports','▥','Reports'],['/app/integrations','⌁','ERP integrations'],['/app/users','♙','Users & access'],['/app/setup','⌘','Warehouse setup'],['/app/company','⚙','Company & plan'],['/app/billing','₱','Subscription & billing']];
+const links=[['/app/dashboard','⌂','Dashboard'],['/app/items','□','Item master'],['/app/receiving','⇩','Receiving'],['/app/orders','⇧','Orders & picking'],['/app/inventory','⇄','Inventory'],['/app/counts','✓','Counts'],['/app/reports','▥','Reports'],['/app/integrations','⌁','ERP integrations'],['/app/users','♙','Users & access'],['/app/setup','⌘','Warehouse setup'],['/app/company','⚙','Company & plan'],['/app/billing','₱','Subscription & billing'],['/account/security','⚿','Account security']];
 
 export default async function AppLayout({children}:{children:React.ReactNode}){
   const session=await getSession(); if(!session) redirect('/signin'); if(session.mustChangePassword) redirect('/account/password');
