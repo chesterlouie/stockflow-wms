@@ -28,6 +28,7 @@ const migrations = [
   ["020_returns_disposition", new URL("../database/migrations/020_returns_disposition.sql", import.meta.url)],
   ["021_inventory_traceability", new URL("../database/migrations/021_inventory_traceability.sql", import.meta.url)],
   ["022_serial_lifecycle_triggers", new URL("../database/migrations/022_serial_lifecycle_triggers.sql", import.meta.url)],
+  ["023_reporting_automation", new URL("../database/migrations/023_reporting_automation.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
