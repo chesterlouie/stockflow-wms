@@ -10,6 +10,7 @@ $pgData=Join-Path $project '.runtime\pgdata'
 $pgLog=Join-Path $project '.runtime\native-postgresql.log'
 $caddy=Join-Path $project '.runtime\caddy\caddy.exe'
 $envFile=Join-Path $project '.env.production'
+$workerPidFile=Join-Path $project '.runtime\report-worker.pid'
 
 function Get-PortProcessId([int]$Port){
   $line=netstat -ano -p tcp | Select-String (":$Port\s+.*LISTENING\s+(\d+)\s*$") | Select-Object -First 1
@@ -39,9 +40,11 @@ function Show-Status {
   $database=if(Get-PortProcessId 5432){'running'}else{'stopped'}
   $application=if(Get-PortProcessId 3100){'running'}else{'stopped'}
   $https=if(Get-PortProcessId 443){'running'}else{'stopped'}
+  $worker=if((Test-Path -LiteralPath $workerPidFile) -and (Get-Process -Id ([int](Get-Content -LiteralPath $workerPidFile)) -ErrorAction SilentlyContinue)){'running'}else{'stopped'}
   Write-Output "Database:    $database"
   Write-Output "Application: $application"
   Write-Output "HTTPS:       $https"
+  Write-Output "Reports:     $worker"
   if($database -eq 'running' -and $application -eq 'running' -and $https -eq 'running'){
     try{$ready=Invoke-RestMethod -Uri 'http://127.0.0.1:3100/api/ready' -TimeoutSec 10;Write-Output "Health:      $($ready.status) (database $($ready.database), migration $($ready.migration))"}catch{Write-Output "Health:      failed - $($_.Exception.Message)"}
   }
@@ -65,6 +68,13 @@ function Start-StockFlow {
   if($LASTEXITCODE -ne 0){throw 'Database application role configuration failed.'}
   & $node --env-file=$envFile (Join-Path $project 'scripts\migrate.mjs')
   if($LASTEXITCODE -ne 0){throw 'Database migration failed.'}
+  $workerRunning=(Test-Path -LiteralPath $workerPidFile) -and (Get-Process -Id ([int](Get-Content -LiteralPath $workerPidFile)) -ErrorAction SilentlyContinue)
+  if(-not $workerRunning){
+    Write-Output 'Starting report delivery worker...'
+    Start-CleanProcess $node '--env-file=.env.production scripts/report-worker.mjs'
+    Start-Sleep -Seconds 1
+    if(-not(Test-Path -LiteralPath $workerPidFile)){throw 'Report delivery worker failed to start.'}
+  }else{Write-Output 'Report delivery worker is already running.'}
   if(-not(Get-PortProcessId 3100)){
     Write-Output 'Starting Warevanta application...'
     Start-CleanProcess $node '--env-file=.env.production node_modules/vinext/dist/cli.js start --hostname 127.0.0.1 --port 3100'
@@ -88,6 +98,7 @@ function Stop-PortService([int]$Port,[string]$ExpectedName){
 }
 function Stop-StockFlow {
   Write-Output 'Stopping HTTPS gateway and application...'
+  if(Test-Path -LiteralPath $workerPidFile){$workerId=[int](Get-Content -LiteralPath $workerPidFile);Stop-Process -Id $workerId -Force -ErrorAction SilentlyContinue;Remove-Item -LiteralPath $workerPidFile -Force -ErrorAction SilentlyContinue}
   Stop-PortService 443 'caddy'
   Stop-PortService 3100 'node'
   if(Get-PortProcessId 5432){
