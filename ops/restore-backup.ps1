@@ -6,7 +6,7 @@ if(-not $resolved.EndsWith('.dump')){throw 'Backup file must end in .dump'}
 if(-not $env:DATABASE_ADMIN_URL){throw 'DATABASE_ADMIN_URL is required'}
 $project=Split-Path -Parent $PSScriptRoot
 $pgRestore=Join-Path $project '.runtime\postgresql\pgsql\bin\pg_restore.exe'
-if(-not(Test-Path -LiteralPath $pgRestore)){throw 'StockFlow PostgreSQL runtime is missing'}
+if(-not(Test-Path -LiteralPath $pgRestore)){throw 'Warevanta PostgreSQL runtime is missing'}
 & $pgRestore --exit-on-error --clean --if-exists --no-owner --dbname=$env:DATABASE_ADMIN_URL $resolved
 if($LASTEXITCODE -ne 0){throw 'Restore failed'}
 Write-Output "Restore completed from $resolved"

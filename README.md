@@ -1,8 +1,8 @@
-# StockFlow WMS
+# Warevanta WMS
 
 ## Local service command
 
-From the StockFlow project folder on Windows:
+From the Warevanta project folder on Windows:
 
 ```powershell
 .\stockflow.cmd start

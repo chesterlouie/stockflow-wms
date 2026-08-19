@@ -1,5 +1,5 @@
 {
-  "name": "stockflow-wms",
+  "name": "warevanta-wms",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -19,6 +19,8 @@
     "test:e2e": "node --env-file=.env.local scripts/e2e-smoke.mjs"
   },
   "dependencies": {
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",

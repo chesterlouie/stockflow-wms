@@ -10,11 +10,11 @@ async function render(path = "/") {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("renders the StockFlow public landing page", async () => {
+test("renders the Warevanta public landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /StockFlow WMS/);
+  assert.match(html, /Warevanta WMS/);
   assert.match(html, /Know exactly what/);
   assert.match(html, /Create your workspace/);
   assert.doesNotMatch(html, /codex-preview/);

@@ -1,6 +1,6 @@
 {
-  "name":"StockFlow Warehouse Management",
-  "short_name":"StockFlow",
+  "name":"Warevanta Warehouse Management",
+  "short_name":"Warevanta",
   "description":"Mobile warehouse receiving, picking, counting, and inventory control.",
   "start_url":"/app/dashboard",
   "display":"standalone",

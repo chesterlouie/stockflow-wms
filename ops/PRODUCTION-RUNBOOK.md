@@ -1,4 +1,4 @@
-# StockFlow local production runbook
+# Warevanta local production runbook
 
 ## Before startup
 
@@ -9,7 +9,7 @@
 
 ## Start and upgrade
 
-Start with `docker compose --env-file .env.production -f compose.production.yml up -d --build`. StockFlow validates its configuration, configures the restricted database role, and applies checksum-protected migrations before serving traffic.
+Start with `docker compose --env-file .env.production -f compose.production.yml up -d --build`. Warevanta validates its configuration, configures the restricted database role, and applies checksum-protected migrations before serving traffic.
 
 After an upgrade, check `https://stockflow.local/api/ready`. A healthy response says `ready`, `connected`, and shows the latest migration.
 

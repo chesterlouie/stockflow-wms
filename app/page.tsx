@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <main className="marketing-page">
       <header className="public-nav container">
-        <Link href="/" className="brand"><span className="brand-mark">S</span><span>StockFlow</span></Link>
+        <Link href="/" className="brand"><span className="brand-mark">W</span><span>Warevanta</span></Link>
         <nav aria-label="Public navigation">
           <a href="#features">Features</a>
           <a href="#about">How it works</a>
@@ -31,7 +31,7 @@ export default function Home() {
           </div>
           <div className="trust-row"><span>✓ No credit card required</span><span>✓ Private company workspace</span><span>✓ Mobile scanning</span></div>
         </div>
-        <div className="product-preview" aria-label="Generic StockFlow dashboard preview">
+        <div className="product-preview" aria-label="Generic Warevanta dashboard preview">
           <div className="preview-top"><span>Operations overview</span><span className="live-dot">● Live</span></div>
           <div className="preview-content">
             <div className="preview-metrics"><div><small>Stock items</small><strong>12.8k</strong></div><div><small>To pick</small><strong>42</strong></div><div><small>Accuracy</small><strong>99.1%</strong></div></div>
@@ -47,7 +47,7 @@ export default function Home() {
           <div className="feature-grid">{features.map(([number,title,description]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
         </div>
       </section>
-      <footer className="public-footer container"><span>© 2026 StockFlow</span><span>Private by design · Built for growing warehouses</span></footer>
+      <footer className="public-footer container"><span>© 2026 Warevanta</span><span>Private by design · Built for growing warehouses</span></footer>
     </main>
   );
 }

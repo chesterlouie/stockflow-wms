@@ -47,7 +47,7 @@ function Show-Status {
   }
 }
 function Start-StockFlow {
-  foreach($required in @($node,(Join-Path $pgBin 'pg_ctl.exe'),$pgData,$caddy,$envFile)){if(-not(Test-Path -LiteralPath $required)){throw "Required StockFlow component is missing: $required"}}
+  foreach($required in @($node,(Join-Path $pgBin 'pg_ctl.exe'),$pgData,$caddy,$envFile)){if(-not(Test-Path -LiteralPath $required)){throw "Required Warevanta component is missing: $required"}}
   Get-Content -LiteralPath $envFile | ForEach-Object {
     if($_ -match '^\s*([^#=]+)=(.*)$'){
       [Environment]::SetEnvironmentVariable($matches[1].Trim(),$matches[2].Trim(),'Process')
@@ -66,7 +66,7 @@ function Start-StockFlow {
   & $node --env-file=$envFile (Join-Path $project 'scripts\migrate.mjs')
   if($LASTEXITCODE -ne 0){throw 'Database migration failed.'}
   if(-not(Get-PortProcessId 3100)){
-    Write-Output 'Starting StockFlow application...'
+    Write-Output 'Starting Warevanta application...'
     Start-CleanProcess $node '--env-file=.env.production node_modules/vinext/dist/cli.js start --hostname 127.0.0.1 --port 3100'
     Wait-ForPort 3100
   }else{Write-Output 'Application is already running.'}
@@ -77,7 +77,7 @@ function Start-StockFlow {
   }else{Write-Output 'HTTPS gateway is already running.'}
   $ready=Invoke-RestMethod -Uri 'http://127.0.0.1:3100/api/ready' -TimeoutSec 15
   if($ready.status -ne 'ready'){throw "Unexpected readiness status: $($ready.status)"}
-  Write-Output "StockFlow is ready at https://localhost (migration $($ready.migration))."
+  Write-Output "Warevanta is ready at https://localhost (migration $($ready.migration))."
 }
 function Stop-PortService([int]$Port,[string]$ExpectedName){
   $processId=Get-PortProcessId $Port
@@ -95,7 +95,7 @@ function Stop-StockFlow {
     & (Join-Path $pgBin 'pg_ctl.exe') stop -D $pgData -m fast -w
     if($LASTEXITCODE -ne 0){throw 'PostgreSQL failed to stop cleanly.'}
   }
-  Write-Output 'StockFlow services are stopped.'
+  Write-Output 'Warevanta services are stopped.'
 }
 
 Set-Location $project

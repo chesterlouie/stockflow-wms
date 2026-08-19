@@ -4,7 +4,7 @@ import "./mobile.css";
 import MobileRuntime from "./components/MobileRuntime";
 
 export const metadata: Metadata = {
-  title: { default: "StockFlow WMS", template: "%s · StockFlow" },
+  title: { default: "Warevanta WMS", template: "%s · Warevanta" },
   description: "Local-first warehouse management for growing businesses.",
   icons: { icon: "/favicon.svg" },
   manifest: "/manifest.webmanifest",
