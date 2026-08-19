@@ -38,7 +38,7 @@ export default function MobileRuntime() {
     addEventListener("beforeinstallprompt", before);
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
-    const enhance = () => document.querySelectorAll<HTMLInputElement>('input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"]').forEach((input) => {
+    const enhance = () => document.querySelectorAll<HTMLInputElement>('input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"],input[name="destinationCode"]').forEach((input) => {
       if (input.dataset.mobileScan) return;
       input.dataset.mobileScan = "1";
       const form = input.form;
