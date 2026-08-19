@@ -26,6 +26,8 @@ const migrations = [
   ["018_putaway_replenishment", new URL("../database/migrations/018_putaway_replenishment.sql", import.meta.url)],
   ["019_outbound_fulfillment", new URL("../database/migrations/019_outbound_fulfillment.sql", import.meta.url)],
   ["020_returns_disposition", new URL("../database/migrations/020_returns_disposition.sql", import.meta.url)],
+  ["021_inventory_traceability", new URL("../database/migrations/021_inventory_traceability.sql", import.meta.url)],
+  ["022_serial_lifecycle_triggers", new URL("../database/migrations/022_serial_lifecycle_triggers.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
