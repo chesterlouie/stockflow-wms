@@ -1,0 +1,10 @@
+ALTER TABLE items ADD COLUMN abc_class text NOT NULL DEFAULT 'C' CHECK(abc_class IN('A','B','C'));
+ALTER TABLE items ADD COLUMN abc_calculated_at timestamptz;
+CREATE TABLE cycle_count_schedules(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,warehouse_id uuid NOT NULL,location_id uuid,name text NOT NULL,abc_classes text[] NOT NULL DEFAULT ARRAY['A']::text[],frequency_days integer NOT NULL CHECK(frequency_days BETWEEN 1 AND 365),variance_threshold numeric(18,6) NOT NULL DEFAULT 0.000001 CHECK(variance_threshold>0),blind_count boolean NOT NULL DEFAULT true,next_run_at timestamptz NOT NULL,active boolean NOT NULL DEFAULT true,last_run_at timestamptz,created_by uuid REFERENCES users(id),created_at timestamptz NOT NULL DEFAULT now(),UNIQUE(company_id,name),FOREIGN KEY(company_id,warehouse_id) REFERENCES warehouses(company_id,id),FOREIGN KEY(company_id,location_id) REFERENCES locations(company_id,id),CHECK(abc_classes<@ARRAY['A','B','C']::text[] AND cardinality(abc_classes)>0));
+ALTER TABLE inventory_counts ADD COLUMN schedule_id uuid REFERENCES cycle_count_schedules(id);
+ALTER TABLE inventory_counts ADD COLUMN parent_count_id uuid REFERENCES inventory_counts(id);
+ALTER TABLE inventory_counts ADD COLUMN recount_number integer NOT NULL DEFAULT 0;
+CREATE INDEX cycle_count_schedules_due_idx ON cycle_count_schedules(active,next_run_at);
+ALTER TABLE cycle_count_schedules ENABLE ROW LEVEL SECURITY;ALTER TABLE cycle_count_schedules FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_cycle_count_schedules ON cycle_count_schedules USING(company_id=nullif(current_setting('app.company_id',true),'')::uuid) WITH CHECK(company_id=nullif(current_setting('app.company_id',true),'')::uuid);
+GRANT SELECT,INSERT,UPDATE,DELETE ON cycle_count_schedules TO stockflow_app;

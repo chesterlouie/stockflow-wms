@@ -1,6 +1,7 @@
 import pg from "pg";
 import { writeFile, unlink } from "node:fs/promises";
 import { sendEmail, emailConfigured, escapeHtml } from "../lib/email.ts";
+import { generateScheduledCount } from "../lib/cycle-counts.ts";
 const url = process.env.DATABASE_ADMIN_URL;
 if (!url) throw new Error("DATABASE_ADMIN_URL is required");
 const deliveryEnabled = process.env.REPORT_DELIVERY_ENABLED === "true";
@@ -19,8 +20,10 @@ const next = (frequency) =>
 if (!deliveryEnabled) {
   await createAlerts();
   await processApprovals();
+  await processCountSchedules();
   const safeTimer = setInterval(
-    () => Promise.all([createAlerts(),processApprovals()]).catch(console.error),
+    () =>
+      Promise.all([createAlerts(), processApprovals(),processCountSchedules()]).catch(console.error),
     60000,
   );
   const safeStop = async () => {
@@ -92,6 +95,7 @@ async function cycle() {
     await createAlerts();
     await notifyAlerts();
     await processApprovals();
+    await processCountSchedules();
   } finally {
     await client.query(`SELECT pg_advisory_unlock(9042026)`);
   }
@@ -158,13 +162,54 @@ async function notifyAlerts() {
     }
   }
 }
-async function processApprovals(){
-  const overdue=(await client.query(`SELECT q.id,q.company_id,q.operation_type,q.entity_id FROM approval_requests q JOIN approval_rules r ON r.id=q.rule_id WHERE q.status='pending' AND q.escalation_notified_at IS NULL AND q.requested_at+(r.escalation_hours||' hours')::interval<now() LIMIT 50`)).rows;
-  for(const q of overdue){await client.query(`INSERT INTO approval_notifications(company_id,request_id,user_id,message) SELECT $1,$2,m.user_id,$3 FROM company_members m WHERE m.company_id=$1 AND m.role IN('owner','admin') ON CONFLICT DO NOTHING`,[q.company_id,q.id,`OVERDUE: ${q.operation_type.replaceAll('_',' ')} · ${q.entity_id}`]);await client.query(`UPDATE approval_requests SET escalation_notified_at=now() WHERE id=$1`,[q.id])}
-  if(!emailConfigured())return;
-  const messages=(await client.query(`SELECT n.id,n.message,n.created_at,u.email,u.display_name,c.name company FROM approval_notifications n JOIN users u ON u.id=n.user_id JOIN companies c ON c.id=n.company_id WHERE n.email_sent_at IS NULL ORDER BY n.created_at LIMIT 50`)).rows;
-  for(const n of messages){try{await sendEmail({to:n.email,subject:`Warevanta approval notification - ${n.company}`,idempotencyKey:`approval-notification-${n.id}`,html:`<p>Hello ${escapeHtml(n.display_name)},</p><p><strong>${escapeHtml(n.message)}</strong></p><p><a href="${process.env.APP_URL}/app/approvals">Open the approval inbox</a>.</p>`,text:`${n.message}\n${process.env.APP_URL}/app/approvals`});await client.query(`UPDATE approval_notifications SET email_sent_at=now(),email_error=NULL WHERE id=$1`,[n.id])}catch(e){await client.query(`UPDATE approval_notifications SET email_error=$2 WHERE id=$1`,[n.id,String(e?.message||e).slice(0,500)])}}
+async function processApprovals() {
+  const overdue = (
+    await client.query(
+      `SELECT q.id,q.company_id,q.operation_type,q.entity_id FROM approval_requests q JOIN approval_rules r ON r.id=q.rule_id WHERE q.status='pending' AND q.escalation_notified_at IS NULL AND q.requested_at+(r.escalation_hours||' hours')::interval<now() LIMIT 50`,
+    )
+  ).rows;
+  for (const q of overdue) {
+    await client.query(
+      `INSERT INTO approval_notifications(company_id,request_id,user_id,message) SELECT $1,$2,m.user_id,$3 FROM company_members m WHERE m.company_id=$1 AND m.role IN('owner','admin') ON CONFLICT DO NOTHING`,
+      [
+        q.company_id,
+        q.id,
+        `OVERDUE: ${q.operation_type.replaceAll("_", " ")} · ${q.entity_id}`,
+      ],
+    );
+    await client.query(
+      `UPDATE approval_requests SET escalation_notified_at=now() WHERE id=$1`,
+      [q.id],
+    );
+  }
+  if (!emailConfigured()) return;
+  const messages = (
+    await client.query(
+      `SELECT n.id,n.message,n.created_at,u.email,u.display_name,c.name company FROM approval_notifications n JOIN users u ON u.id=n.user_id JOIN companies c ON c.id=n.company_id WHERE n.email_sent_at IS NULL ORDER BY n.created_at LIMIT 50`,
+    )
+  ).rows;
+  for (const n of messages) {
+    try {
+      await sendEmail({
+        to: n.email,
+        subject: `Warevanta approval notification - ${n.company}`,
+        idempotencyKey: `approval-notification-${n.id}`,
+        html: `<p>Hello ${escapeHtml(n.display_name)},</p><p><strong>${escapeHtml(n.message)}</strong></p><p><a href="${process.env.APP_URL}/app/approvals">Open the approval inbox</a>.</p>`,
+        text: `${n.message}\n${process.env.APP_URL}/app/approvals`,
+      });
+      await client.query(
+        `UPDATE approval_notifications SET email_sent_at=now(),email_error=NULL WHERE id=$1`,
+        [n.id],
+      );
+    } catch (e) {
+      await client.query(
+        `UPDATE approval_notifications SET email_error=$2 WHERE id=$1`,
+        [n.id, String(e?.message || e).slice(0, 500)],
+      );
+    }
+  }
 }
+async function processCountSchedules(){if(!(await client.query(`SELECT pg_try_advisory_lock(9042035) ok`)).rows[0].ok)return;try{const due=(await client.query(`SELECT * FROM cycle_count_schedules WHERE active=true AND next_run_at<=now() ORDER BY next_run_at LIMIT 25 FOR UPDATE SKIP LOCKED`)).rows;for(const schedule of due){try{const id=await generateScheduledCount(client,schedule,null);if(id)await client.query(`INSERT INTO audit_logs(company_id,action,entity_type,entity_id,details) VALUES($1,'scheduled_count_generated','inventory_count',$2,$3::jsonb)`,[schedule.company_id,id,JSON.stringify({scheduleId:schedule.id})]);else await client.query(`UPDATE cycle_count_schedules SET last_run_at=now(),next_run_at=next_run_at+(frequency_days||' days')::interval WHERE id=$1`,[schedule.id])}catch(e){console.error('Scheduled count generation failed',e)}}}finally{await client.query(`SELECT pg_advisory_unlock(9042035)`)}}
 let stopping = false;
 const stop = async () => {
   if (stopping) return;
