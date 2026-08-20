@@ -27,6 +27,7 @@ jobs:
       SESSION_SECRET: ci-session-secret-with-at-least-32-characters
       APP_URL: https://staging-ci.example.test
       REPORT_DELIVERY_ENABLED: "false"
+      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
