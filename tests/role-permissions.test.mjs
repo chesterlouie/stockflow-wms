@@ -36,6 +36,8 @@ const protectedRoutes = [
   ["app/api/counts/schedules/route.ts", ["owner", "admin", "manager"]],
   ["app/api/counts/[id]/recount/route.ts", ["owner", "admin", "manager"]],
   ["app/api/items/[id]/cost/route.ts", ["owner", "admin", "manager"]],
+  ["app/api/items/[id]/uom/route.ts", ["owner", "admin", "manager"]],
+  ["app/api/inventory/status/route.ts", ["owner", "admin", "manager"]],
 ];
 for (const [path, roles] of protectedRoutes)
   test(`${path} enforces its management roles`, async () => {
