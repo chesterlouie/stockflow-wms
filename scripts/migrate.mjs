@@ -41,6 +41,7 @@ const migrations = [
   ["033_approval_delegation_notifications", new URL("../database/migrations/033_approval_delegation_notifications.sql", import.meta.url)],
   ["034_approval_escalation_delivery", new URL("../database/migrations/034_approval_escalation_delivery.sql", import.meta.url)],
   ["035_cycle_count_automation", new URL("../database/migrations/035_cycle_count_automation.sql", import.meta.url)],
+  ["036_inventory_valuation_reports", new URL("../database/migrations/036_inventory_valuation_reports.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
