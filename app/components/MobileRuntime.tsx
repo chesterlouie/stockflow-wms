@@ -1,16 +1,37 @@
 "use client";
 
-import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
-import { BarcodeFormat, DecodeHintType, NotFoundException } from "@zxing/library";
+import {
+  BrowserMultiFormatReader,
+  type IScannerControls,
+} from "@zxing/browser";
+import {
+  BarcodeFormat,
+  DecodeHintType,
+  NotFoundException,
+} from "@zxing/library";
 import { useEffect, useRef, useState } from "react";
+import {parseGs1} from '../../lib/gs1';
 
-type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+type InstallEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+};
 
 const hints = new Map<DecodeHintType, unknown>([
-  [DecodeHintType.POSSIBLE_FORMATS, [
-    BarcodeFormat.CODE_128, BarcodeFormat.EAN_13, BarcodeFormat.EAN_8,
-    BarcodeFormat.UPC_A, BarcodeFormat.UPC_E, BarcodeFormat.QR_CODE, BarcodeFormat.DATA_MATRIX,
-  ]],
+  [
+    DecodeHintType.POSSIBLE_FORMATS,
+    [
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.QR_CODE,
+      BarcodeFormat.DATA_MATRIX,
+      BarcodeFormat.RSS_14,
+      BarcodeFormat.RSS_EXPANDED,
+    ],
+  ],
   [DecodeHintType.TRY_HARDER, true],
 ]);
 
@@ -28,34 +49,105 @@ export default function MobileRuntime() {
   const completed = useRef(false);
   const startRef = useRef<(input: HTMLInputElement) => void>(() => undefined);
 
+  function applyScan(input: HTMLInputElement, raw: string) {
+    const gs1 = parseGs1(raw.trim());
+    const value =
+      (input.name === "barcode" ||
+        input.name === "receiptBarcode" ||
+        input.name === "scan") &&
+      gs1.item
+        ? gs1.item
+        : raw.trim();
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    const form = input.form;
+    if (form) {
+      const fill = (name: string, value?: string) => {
+        if (!value) return;
+        const field = form.elements.namedItem(name) as
+          HTMLInputElement | HTMLTextAreaElement | null;
+        if (field && !field.value) {
+          field.value = value;
+          field.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      };
+      fill("lotNumber", gs1.lot);
+      fill("expiryDate", gs1.expiry);
+      fill("serialNumbers", gs1.serial);
+    }
+    input.focus();
+    return gs1;
+  }
+
   useEffect(() => {
     queueMicrotask(() => setOnline(navigator.onLine));
     const on = () => setOnline(true);
     const off = () => setOnline(false);
-    const before = (event: Event) => { event.preventDefault(); setInstall(event as InstallEvent); };
+    const before = (event: Event) => {
+      event.preventDefault();
+      setInstall(event as InstallEvent);
+    };
     addEventListener("online", on);
     addEventListener("offline", off);
     addEventListener("beforeinstallprompt", before);
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    if ("serviceWorker" in navigator)
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
-    const enhance = () => document.querySelectorAll<HTMLInputElement>('input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"],input[name="destinationCode"]').forEach((input) => {
-      if (input.dataset.mobileScan) return;
-      input.dataset.mobileScan = "1";
-      const form = input.form;
-      if (input.name === "receiptBarcode" && form) form.action = form.action.replace(/\/inspect$/, "/mobile-inspect");
-      const key = `stockflow-draft:${form?.getAttribute("action") || location.pathname}:${input.name}`;
-      const saved = localStorage.getItem(key);
-      if (saved && !input.value) input.value = saved;
-      input.addEventListener("input", () => localStorage.setItem(key, input.value));
-      form?.addEventListener("submit", () => { if (navigator.onLine) localStorage.removeItem(key); }, { once: true });
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "button button-secondary camera-scan-button";
-      button.textContent = "📷 Scan with camera";
-      button.setAttribute("aria-label", `Scan ${input.name} with phone camera`);
-      button.onclick = () => startRef.current(input);
-      input.insertAdjacentElement("afterend", button);
-    });
+    const enhance = () => {
+      document
+        .querySelectorAll<HTMLInputElement>(
+          'input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"],input[name="destinationCode"],input[name="scan"],input[name="trackingNumber"]',
+        )
+        .forEach((input) => {
+          if (input.dataset.mobileScan) return;
+          input.dataset.mobileScan = "1";
+          const form = input.form;
+          if (input.name === "receiptBarcode" && form)
+            form.action = form.action.replace(/\/inspect$/, "/mobile-inspect");
+          const key = `stockflow-draft:${form?.getAttribute("action") || location.pathname}:${input.name}`;
+          const saved = localStorage.getItem(key);
+          if (saved && !input.value) input.value = saved;
+          input.addEventListener("input", () =>
+            localStorage.setItem(key, input.value),
+          );
+          input.addEventListener("change", () => {
+            if (
+              input.name === "barcode" ||
+              input.name === "receiptBarcode" ||
+              input.name === "scan"
+            )
+              applyScan(input, input.value);
+          });
+          form?.addEventListener(
+            "submit",
+            () => {
+              if (navigator.onLine) localStorage.removeItem(key);
+            },
+            { once: true },
+          );
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "button button-secondary camera-scan-button";
+          button.textContent = "📷 Scan with camera";
+          button.setAttribute(
+            "aria-label",
+            `Scan ${input.name} with phone camera`,
+          );
+          button.onclick = () => startRef.current(input);
+          input.insertAdjacentElement("afterend", button);
+        });
+      document
+        .querySelectorAll<HTMLElement>(".success-banner,.form-error")
+        .forEach((b) => {
+          if (b.dataset.scanFeedback) return;
+          b.dataset.scanFeedback = "1";
+          if (b.classList.contains("success-banner")) {
+            navigator.vibrate?.([80, 40, 80]);
+            beep();
+          } else navigator.vibrate?.([220, 70, 220]);
+        });
+    };
     enhance();
     const observer = new MutationObserver(enhance);
     observer.observe(document.body, { childList: true, subtree: true });
@@ -79,65 +171,100 @@ export default function MobileRuntime() {
     setStarting(true);
     setScanning(true);
     setMessage("Starting the rear camera…");
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
     if (!video.current) {
       setStarting(false);
-      setMessage("The camera preview could not open. Close the scanner and try again.");
+      setMessage(
+        "The camera preview could not open. Close the scanner and try again.",
+      );
       return;
     }
 
     try {
-      const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 100, delayBetweenScanSuccess: 500 });
+      const reader = new BrowserMultiFormatReader(hints, {
+        delayBetweenScanAttempts: 100,
+        delayBetweenScanSuccess: 500,
+      });
       const scannerControls = await reader.decodeFromConstraints(
-        { audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        {
+          audio: false,
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
         video.current,
         (result, error) => {
           if (completed.current) return;
           if (result) {
             completed.current = true;
             const value = result.getText().trim();
-            input.value = value;
-            input.dispatchEvent(new Event("input", { bubbles: true }));
-            input.dispatchEvent(new Event("change", { bubbles: true }));
-            input.focus();
+            const gs1 = applyScan(input, value);
             navigator.vibrate?.(120);
             beep();
-            setMessage(`Scanned: ${value}`);
+            setMessage(
+              gs1.item
+                ? `GS1 scanned · Item ${gs1.item}${gs1.lot ? ` · Lot ${gs1.lot}` : ""}${gs1.expiry ? ` · Expiry ${gs1.expiry}` : ""}${gs1.serial ? ` · Serial ${gs1.serial}` : ""}`
+                : `Scanned: ${value}`,
+            );
             setTimeout(stop, 500);
           } else if (error && !(error instanceof NotFoundException)) {
-            setMessage("Keep the barcode inside the frame and move the phone slowly closer or farther away.");
+            setMessage(
+              "Keep the barcode inside the frame and move the phone slowly closer or farther away.",
+            );
           }
         },
       );
       controls.current = scannerControls;
       setTorchAvailable(Boolean(scannerControls.switchTorch));
       setStarting(false);
-      setMessage("Center the barcode inside the frame. Hold steady in good light.");
+      setMessage(
+        "Center the barcode inside the frame. Hold steady in good light.",
+      );
     } catch (error) {
       setStarting(false);
       const name = error instanceof DOMException ? error.name : "";
       if (name === "NotAllowedError" || name === "SecurityError") {
-        setMessage("Camera permission is blocked. Allow Camera in this site’s browser settings, then tap Try again.");
+        setMessage(
+          "Camera permission is blocked. Allow Camera in this site’s browser settings, then tap Try again.",
+        );
       } else if (name === "NotFoundError" || name === "OverconstrainedError") {
-        setMessage("No usable rear camera was found. Try another browser or use a Bluetooth scanner.");
+        setMessage(
+          "No usable rear camera was found. Try another browser or use a Bluetooth scanner.",
+        );
       } else {
-        setMessage("The camera could not start. Check that no other app is using it, then tap Try again.");
+        setMessage(
+          "The camera could not start. Check that no other app is using it, then tap Try again.",
+        );
       }
     }
   }
 
-  startRef.current = (input) => { void start(input); };
+  startRef.current = (input) => {
+    void start(input);
+  };
 
   async function toggleTorch() {
     if (!controls.current?.switchTorch) return;
     const next = !torchOn;
-    try { await controls.current.switchTorch(next); setTorchOn(next); }
-    catch { setTorchAvailable(false); setMessage("The flashlight is not available with this camera."); }
+    try {
+      await controls.current.switchTorch(next);
+      setTorchOn(next);
+    } catch {
+      setTorchAvailable(false);
+      setMessage("The flashlight is not available with this camera.");
+    }
   }
 
   function beep() {
     try {
-      const Audio = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const Audio =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
       const context = new Audio();
       const oscillator = context.createOscillator();
       const gain = context.createGain();
@@ -147,7 +274,9 @@ export default function MobileRuntime() {
       gain.connect(context.destination);
       oscillator.start();
       oscillator.stop(context.currentTime + 0.1);
-    } catch { /* Sound is optional; vibration and the success message remain. */ }
+    } catch {
+      /* Sound is optional; vibration and the success message remain. */
+    }
   }
 
   function stop() {
@@ -159,21 +288,73 @@ export default function MobileRuntime() {
     setScanning(false);
   }
 
-  return <>
-    <div className={`connectivity-pill ${online ? "online" : "offline"}`} role="status">
-      {online ? "● Online" : "● Offline · scans saved on this phone"}
-    </div>
-    {install && <button className="install-app-button" onClick={async () => { await install.prompt(); setInstall(null); }}>Install Warevanta</button>}
-    {scanning && <div className="scanner-modal" role="dialog" aria-modal="true" aria-label="Barcode camera scanner">
-      <div className="scanner-card">
-        <div className="scanner-frame"><video ref={video} playsInline muted aria-label="Live rear-camera preview" /><span /></div>
-        <p role="status">{message}</p>
-        <div className="scanner-actions">
-          {torchAvailable && <button className="button button-secondary" type="button" onClick={toggleTorch}>{torchOn ? "Turn flashlight off" : "Turn flashlight on"}</button>}
-          {!controls.current && !starting && <button className="button button-primary" type="button" onClick={() => start()}>Try camera again</button>}
-          <button className="button button-secondary" type="button" onClick={stop}>Close scanner</button>
-        </div>
+  return (
+    <>
+      <div
+        className={`connectivity-pill ${online ? "online" : "offline"}`}
+        role="status"
+      >
+        {online ? "● Online" : "● Offline · scans saved on this phone"}
       </div>
-    </div>}
-  </>;
+      {install && (
+        <button
+          className="install-app-button"
+          onClick={async () => {
+            await install.prompt();
+            setInstall(null);
+          }}
+        >
+          Install Warevanta
+        </button>
+      )}
+      {scanning && (
+        <div
+          className="scanner-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Barcode camera scanner"
+        >
+          <div className="scanner-card">
+            <div className="scanner-frame">
+              <video
+                ref={video}
+                playsInline
+                muted
+                aria-label="Live rear-camera preview"
+              />
+              <span />
+            </div>
+            <p role="status">{message}</p>
+            <div className="scanner-actions">
+              {torchAvailable && (
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={toggleTorch}
+                >
+                  {torchOn ? "Turn flashlight off" : "Turn flashlight on"}
+                </button>
+              )}
+              {!controls.current && !starting && (
+                <button
+                  className="button button-primary"
+                  type="button"
+                  onClick={() => start()}
+                >
+                  Try camera again
+                </button>
+              )}
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={stop}
+              >
+                Close scanner
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
