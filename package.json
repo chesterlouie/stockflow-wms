@@ -18,12 +18,14 @@
     "db:configure-role": "node scripts/configure-app-role.mjs",
     "config:validate": "node scripts/validate-production-env.mjs",
     "test:e2e": "node --env-file=.env.local scripts/e2e-smoke.mjs",
+    "test:e2e:advanced": "pnpm exec node --env-file=.env.production scripts/e2e-advanced.mjs",
     "test:billing": "node --env-file=.env.production --test tests/paymongo-webhook.test.mjs"
     ,"test:purchasing": "node --env-file=.env.production --test tests/purchasing.test.mjs"
     ,"test:security": "node --env-file=.env.production --test tests/security-isolation.test.mjs"
     ,"test:roles": "node --test tests/role-permissions.test.mjs"
     ,"test:readiness": "node --env-file=.env.production --test tests/warehouse-readiness.test.mjs"
     ,"staging:check": "pnpm test && pnpm run test:purchasing && pnpm run test:security && pnpm run test:roles && pnpm run test:readiness"
+    ,"staging:full": "pnpm run staging:check && pnpm run test:e2e:advanced"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.1",
