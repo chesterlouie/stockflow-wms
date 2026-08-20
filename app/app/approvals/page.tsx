@@ -22,6 +22,10 @@ type Rule = {
   operation_type: string;
   required_steps: string;
   active: boolean;
+  threshold_quantity:string|null;
+  escalation_hours:string;
+  step1_role:string;
+  step2_role:string|null;
 };
 type User={id:string;display_name:string;role:string};
 type Delegation={id:string;delegator:string;delegate:string;starts_at:string;ends_at:string};
@@ -38,7 +42,7 @@ export default async function Approvals() {
   const rules = s
     ? await tenantRows<Rule>(
         s.companyId,
-        `SELECT id,name,operation_type,required_steps::text,active FROM approval_rules WHERE company_id=$1 ORDER BY name`,
+        `SELECT r.id,r.name,r.operation_type,r.required_steps::text,r.active,r.threshold_quantity::text,r.escalation_hours::text,(SELECT approver_role FROM approval_rule_steps WHERE rule_id=r.id AND step_no=1) step1_role,(SELECT approver_role FROM approval_rule_steps WHERE rule_id=r.id AND step_no=2) step2_role FROM approval_rules r WHERE r.company_id=$1 ORDER BY r.name`,
         [s.companyId],
       )
     : [];
@@ -178,17 +182,7 @@ export default async function Approvals() {
               <button className="button button-primary">Create rule</button>
             </form>
             <h2>Active rules</h2>
-            {rules.map((r) => (
-              <div className="task" key={r.id}>
-                <span>
-                  <strong>{r.name}</strong>
-                  <small>
-                    {r.operation_type.replaceAll("_", " ")} · {r.required_steps}{" "}
-                    step(s)
-                  </small>
-                </span>
-              </div>
-            ))}
+            {rules.map(r=><details key={r.id} className="task"><summary><strong>{r.name}</strong><small>{r.operation_type.replaceAll('_',' ')} · {r.required_steps} step(s) · {r.active?'active':'disabled'}</small></summary><form className="form-stack compact-form" method="post" action={`/api/approvals/rules/${r.id}`}><input type="hidden" name="action" value="update"/><input name="name" defaultValue={r.name} required/><input name="thresholdQuantity" type="number" min="0" step="any" defaultValue={r.threshold_quantity||''} placeholder="Quantity threshold"/><input name="escalationHours" type="number" min="1" max="720" defaultValue={r.escalation_hours}/><select name="step1Role" defaultValue={r.step1_role}><option value="manager">Manager</option><option value="admin">Administrator</option><option value="owner">Owner</option></select>{Number(r.required_steps)>1&&<select name="step2Role" defaultValue={r.step2_role||'owner'}><option value="owner">Owner</option><option value="admin">Administrator</option><option value="manager">Manager</option></select>}<button className="button button-secondary">Save changes</button></form><form method="post" action={`/api/approvals/rules/${r.id}`}><input type="hidden" name="action" value="toggle"/><button className="signout-button">{r.active?'Disable rule':'Enable rule'}</button></form></details>)}
             <h2>Delegate my approvals</h2>
             <form className="form-stack" method="post" action="/api/approvals/delegations"><select name="delegateId" required>{users.map(u=><option key={u.id} value={u.id}>{u.display_name} · {u.role}</option>)}</select><div className="field"><label>Starts</label><input name="startsAt" type="datetime-local" required/></div><div className="field"><label>Ends</label><input name="endsAt" type="datetime-local" required/></div><button className="button button-secondary" disabled={!users.length}>Create delegation</button></form>
             <h2>Active delegations</h2>{delegations.length?delegations.map(d=><div className="task" key={d.id}><span><strong>{d.delegator} → {d.delegate}</strong><small>{new Date(d.starts_at).toLocaleString()} – {new Date(d.ends_at).toLocaleString()}</small></span><form method="post" action={`/api/approvals/delegations/${d.id}/revoke`}><button className="signout-button">Revoke</button></form></div>):<p className="empty-cell">No active delegations.</p>}

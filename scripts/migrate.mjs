@@ -39,6 +39,7 @@ const migrations = [
   ["031_approval_workflows", new URL("../database/migrations/031_approval_workflows.sql", import.meta.url)],
   ["032_reversal_approvals", new URL("../database/migrations/032_reversal_approvals.sql", import.meta.url)],
   ["033_approval_delegation_notifications", new URL("../database/migrations/033_approval_delegation_notifications.sql", import.meta.url)],
+  ["034_approval_escalation_delivery", new URL("../database/migrations/034_approval_escalation_delivery.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();

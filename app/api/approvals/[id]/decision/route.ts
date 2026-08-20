@@ -301,6 +301,7 @@ export async function POST(
           [p.data.decision, id],
         );
         await c.query(`UPDATE approval_notifications SET read_at=now() WHERE request_id=$1 AND read_at IS NULL`,[id]);
+        if(q.requested_by)await c.query(`INSERT INTO approval_notifications(company_id,request_id,user_id,message) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING`,[s.companyId,id,q.requested_by,`${q.operation_type.replaceAll('_',' ')} was ${p.data.decision}`]);
         return;
       }
       if (q.current_step < q.required_steps) {
@@ -320,6 +321,7 @@ export async function POST(
         [id],
       );
       await c.query(`UPDATE approval_notifications SET read_at=now() WHERE request_id=$1 AND read_at IS NULL`,[id]);
+      if(q.requested_by)await c.query(`INSERT INTO approval_notifications(company_id,request_id,user_id,message) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING`,[s.companyId,id,q.requested_by,`${q.operation_type.replaceAll('_',' ')} was approved and executed`]);
       await c.query(
         `INSERT INTO audit_logs(company_id,user_id,action,entity_type,entity_id,details) VALUES($1,$2,'approval_executed','approval_request',$3,$4::jsonb)`,
         [
