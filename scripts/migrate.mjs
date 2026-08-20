@@ -38,6 +38,7 @@ const migrations = [
   ["030_labor_management", new URL("../database/migrations/030_labor_management.sql", import.meta.url)],
   ["031_approval_workflows", new URL("../database/migrations/031_approval_workflows.sql", import.meta.url)],
   ["032_reversal_approvals", new URL("../database/migrations/032_reversal_approvals.sql", import.meta.url)],
+  ["033_approval_delegation_notifications", new URL("../database/migrations/033_approval_delegation_notifications.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();

@@ -1,0 +1,2 @@
+import {getSession} from '../../../../../lib/auth';import {withTenant} from '../../../../../lib/db';
+export async function POST(r:Request){const s=await getSession();if(!s)return Response.redirect(new URL('/signin',r.url),303);await withTenant(s.companyId,c=>c.query(`UPDATE approval_notifications SET read_at=now() WHERE company_id=$1 AND user_id=$2 AND read_at IS NULL`,[s.companyId,s.userId]));return Response.redirect(new URL('/app/approvals',r.url),303)}
