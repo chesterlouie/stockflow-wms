@@ -48,6 +48,7 @@ Local-first, cloud-ready warehouse management for small and medium businesses.
 - Customer sales orders with priority and requested ship dates
 - FEFO/FIFO stock allocation with reservation protection
 - Mobile-friendly pick tasks with location and item barcode validation
+- Dedicated mobile pick-and-pack queues with priority, wave, and scan filtering
 - Auditable storage-to-packing movements and dispatch inventory issue
 - Cycle, physical, and wall-to-wall inventory count plans
 - Blind mobile count entry with location and barcode validation
