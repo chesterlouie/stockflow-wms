@@ -50,6 +50,7 @@ Local-first, cloud-ready warehouse management for small and medium businesses.
 - Mobile-friendly pick tasks with location and item barcode validation
 - Dedicated mobile pick-and-pack queues with priority, wave, and scan filtering
 - Mobile dispatch verification with carrier, tracking, and printable shipment labels
+- Short-pick exceptions, manager reallocation, and controlled order holds or cancellation
 - Auditable storage-to-packing movements and dispatch inventory issue
 - Cycle, physical, and wall-to-wall inventory count plans
 - Blind mobile count entry with location and barcode validation
