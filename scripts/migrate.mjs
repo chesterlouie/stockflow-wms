@@ -43,6 +43,7 @@ const migrations = [
   ["035_cycle_count_automation", new URL("../database/migrations/035_cycle_count_automation.sql", import.meta.url)],
   ["036_inventory_valuation_reports", new URL("../database/migrations/036_inventory_valuation_reports.sql", import.meta.url)],
   ["037_inventory_availability_uom", new URL("../database/migrations/037_inventory_availability_uom.sql", import.meta.url)],
+  ["038_uom_transaction_normalization", new URL("../database/migrations/038_uom_transaction_normalization.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();

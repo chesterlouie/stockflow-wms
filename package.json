@@ -26,7 +26,7 @@
     "test:roles": "node --test tests/role-permissions.test.mjs",
     "test:readiness": "node --env-file-if-exists=.env.production --test tests/warehouse-readiness.test.mjs",
     "test:warehouse": "node --env-file-if-exists=.env.production scripts/e2e-advanced.mjs",
-    "qa:local": "pnpm run test:security && pnpm run test:roles && pnpm run test:purchasing && pnpm run test:billing && pnpm run test:readiness && node --test tests/gs1.test.mjs && pnpm run test:warehouse",
+    "qa:local": "pnpm run test:security && pnpm run test:roles && pnpm run test:purchasing && pnpm run test:billing && pnpm run test:readiness && node --env-file-if-exists=.env.production --test tests/uom-conversions.test.mjs && node --test tests/gs1.test.mjs && pnpm run test:warehouse",
     "staging:check": "pnpm test && pnpm run test:purchasing && pnpm run test:security && pnpm run test:roles && pnpm run test:readiness",
     "staging:full": "pnpm run staging:check && pnpm run test:e2e:advanced"
   },
