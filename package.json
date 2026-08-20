@@ -20,6 +20,10 @@
     "test:e2e": "node --env-file=.env.local scripts/e2e-smoke.mjs",
     "test:billing": "node --env-file=.env.production --test tests/paymongo-webhook.test.mjs"
     ,"test:purchasing": "node --env-file=.env.production --test tests/purchasing.test.mjs"
+    ,"test:security": "node --env-file=.env.production --test tests/security-isolation.test.mjs"
+    ,"test:roles": "node --test tests/role-permissions.test.mjs"
+    ,"test:readiness": "node --env-file=.env.production --test tests/warehouse-readiness.test.mjs"
+    ,"staging:check": "pnpm test && pnpm run test:purchasing && pnpm run test:security && pnpm run test:roles && pnpm run test:readiness"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.1",
