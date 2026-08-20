@@ -55,6 +55,7 @@ Local-first, cloud-ready warehouse management for small and medium businesses.
 - Conflict-safe dock scheduling, supplier appointments, and mobile gate check-in
 - Demand-driven cross-docking with partial putaway preservation and scan validation
 - Demand forecasting, stockout projections, and approved replenishment recommendations
+- Warehouse shifts, operator assignments, task events, and productivity tracking
 - Auditable storage-to-packing movements and dispatch inventory issue
 - Cycle, physical, and wall-to-wall inventory count plans
 - Blind mobile count entry with location and barcode validation
