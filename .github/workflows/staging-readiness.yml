@@ -1,0 +1,52 @@
+name: Staging readiness
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  packages: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: warevanta
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d warevanta"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5432/warevanta
+      DATABASE_URL: postgresql://stockflow_app:CiAppPassword_2026_secure@127.0.0.1:5432/warevanta
+      APP_DB_PASSWORD: CiAppPassword_2026_secure
+      SESSION_SECRET: ci-session-secret-with-at-least-32-characters
+      APP_URL: https://staging-ci.example.test
+      REPORT_DELIVERY_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: {version: 10}
+      - uses: actions/setup-node@v4
+        with: {node-version: 24, cache: pnpm}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run db:configure-role
+      - run: node scripts/migrate.mjs
+      - run: pnpm run staging:check
+  image:
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with: {registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}"}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}

@@ -12,4 +12,4 @@ ENV NODE_ENV=production
 RUN corepack enable
 COPY --from=build /app ./
 EXPOSE 3000
-CMD ["sh","-c","pnpm run config:validate && pnpm run db:configure-role && pnpm run db:migrate && pnpm run start -- --host 0.0.0.0"]
+CMD ["sh","-c","pnpm run config:validate && pnpm run db:configure-role && pnpm run db:migrate && pnpm run start -- --hostname 0.0.0.0 --port 3000"]

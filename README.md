@@ -16,6 +16,8 @@ Other available commands:
 .\stockflow.cmd stop
 ```
 
+Before promoting a release, run `pnpm run staging:full`. Managed staging deployment, backup, monitoring, and rollback procedures are documented in `ops/STAGING-RUNBOOK.md`.
+
 After startup, open `https://localhost`.
 
 For a phone connected to the same Wi-Fi, set `STOCKFLOW_LAN_HOST` in the ignored

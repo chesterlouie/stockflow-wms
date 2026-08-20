@@ -1,0 +1,40 @@
+services:
+  app:
+    image: ${WAREVANTA_IMAGE:?Set WAREVANTA_IMAGE to an immutable image digest}
+    restart: unless-stopped
+    env_file: .env.staging
+    expose: ["3000"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp"]
+  reports:
+    image: ${WAREVANTA_IMAGE:?Set WAREVANTA_IMAGE to an immutable image digest}
+    restart: unless-stopped
+    env_file: .env.staging
+    command: ["pnpm","run","worker:reports"]
+    depends_on:
+      app: {condition: service_healthy}
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp"]
+  gateway:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      WAREVANTA_DOMAIN: ${WAREVANTA_DOMAIN:?Set WAREVANTA_DOMAIN}
+    ports: ["80:80","443:443"]
+    volumes:
+      - ./ops/Caddyfile.staging:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app: {condition: service_healthy}
+volumes:
+  caddy_data:
+  caddy_config:

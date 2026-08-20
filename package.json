@@ -17,6 +17,7 @@
     "db:verify": "node --env-file=.env.local scripts/verify-database.mjs",
     "db:configure-role": "node scripts/configure-app-role.mjs",
     "config:validate": "node scripts/validate-production-env.mjs",
+    "config:validate:staging": "node scripts/validate-staging-env.mjs",
     "test:e2e": "node --env-file=.env.local scripts/e2e-smoke.mjs",
     "test:e2e:advanced": "pnpm exec node --env-file=.env.production scripts/e2e-advanced.mjs",
     "test:billing": "node --env-file=.env.production --test tests/paymongo-webhook.test.mjs"
