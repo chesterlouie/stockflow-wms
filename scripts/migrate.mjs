@@ -32,6 +32,7 @@ const migrations = [
   ["024_report_delivery", new URL("../database/migrations/024_report_delivery.sql", import.meta.url)],
   ["025_fulfillment_exceptions", new URL("../database/migrations/025_fulfillment_exceptions.sql", import.meta.url)],
   ["026_cartons_manifests", new URL("../database/migrations/026_cartons_manifests.sql", import.meta.url)],
+  ["027_dock_scheduling", new URL("../database/migrations/027_dock_scheduling.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString });
 await client.connect();
