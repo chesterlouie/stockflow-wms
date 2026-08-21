@@ -1,0 +1,38 @@
+const quantities=[['On hand','Physical quantity recorded at this exact warehouse, location, lot, and expiry.'],['Reserved','Part of on-hand stock committed to open customer orders.'],['Available to promise (ATP)','Quantity still eligible for new orders after reservations and stock-status exclusions.']];
+const statuses=[['Available','Eligible for reservation and fulfillment when it is not already reserved or expired.'],['Hold','Temporarily unavailable while a decision or investigation is pending.'],['Quarantine','Isolated for quality, regulatory, or inspection control.'],['Damaged','Unavailable because it is unusable or requires disposition.'],['Expired','Automatically unavailable after its expiry date.']];
+
+export default function ModuleSix(){return <section className="panel" id="module-6">
+  <div className="panel-heading"><div><p className="eyebrow">Module 6</p><h2>Inventory, Transfers, Adjustments, and Stock Status</h2><p>Goal: understand current stock, move it without changing the total, correct genuine variances, and control whether it can be promised.</p></div><span className="badge">Current lesson</span></div>
+  <h3>Inventory is a balance plus a history</h3>
+  <p>Open <strong>Inventory → Availability</strong>. Warevanta calculates each balance from immutable ledger movements. It does not simply overwrite a quantity. Every receipt, transfer, adjustment, pick, shipment, return, and status decision remains traceable.</p>
+  <pre className="knowledge-tree">Opening balance + inbound movements − outbound movements{`\n`}= Current on-hand balance</pre>
+  <h3>Read the three quantities</h3>
+  <table className="data-table"><thead><tr><th>Quantity</th><th>Meaning</th></tr></thead><tbody>{quantities.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td></tr>)}</tbody></table>
+  <div className="knowledge-note"><strong>Simple ATP example:</strong> 120 EA on hand − 20 EA reserved = 100 EA ATP, provided the balance is Available and not expired. A Hold, Quarantine, Damaged, or Expired balance has zero ATP.</div>
+  <h3>Why the same SKU appears on several rows</h3>
+  <p>Warevanta keeps balances separate by company, warehouse, location, item, lot, expiry, and stock status. Ten units in Storage and ten units in Picking are two location balances even though the company still owns twenty units in total.</p>
+  <h3>Transfer stock</h3>
+  <p>Open <strong>Inventory → Transfers</strong>. A transfer moves an exact item/lot/expiry balance from one active location to another. It creates two linked movements:</p>
+  <pre className="knowledge-tree">Source location  −10 EA{`\n`}Destination      +10 EA{`\n`}Company total      0 EA change</pre>
+  <ul><li>Use the item&apos;s base unit.</li><li>Select different source and destination locations.</li><li>Enter the exact source lot and expiry for tracked stock.</li><li>The source cannot become negative.</li><li>Use a unique operational reference, such as <code>TRAIN-TR-001</code>.</li><li>Owner, Administrator, Manager, and Operator roles may transfer stock.</li></ul>
+  <h3>Practice transfer</h3>
+  <p>Locate an available <code>TRAIN-COLA-330</code> balance in Storage. If a Picking location does not exist, create one in Warehouse Setup first. Transfer <strong>10 EA</strong> from the storage location to the picking location using the balance&apos;s exact lot and expiry.</p>
+  <table className="data-table"><tbody><tr><th>Item</th><td>TRAIN-COLA-330</td></tr><tr><th>From / to</th><td>Your Storage location → your Picking location</td></tr><tr><th>Quantity / UOM</th><td>10 / EA</td></tr><tr><th>Lot / expiry</th><td>Copy the exact values from Inventory Availability</td></tr><tr><th>Reference</th><td>TRAIN-TR-001</td></tr><tr><th>Note</th><td>Module 6 picking replenishment practice</td></tr></tbody></table>
+  <p>After posting, confirm the source decreased by 10, the destination increased by 10, and movement history shows both sides.</p>
+  <h3>Adjust stock</h3>
+  <p>An adjustment corrects a proven difference between Warevanta and physical stock. It is not a substitute for receiving, transferring, shipping, or returning stock.</p>
+  <table className="data-table"><thead><tr><th>Entry</th><th>Effect</th><th>Example</th></tr></thead><tbody><tr><td>Positive quantity</td><td>Increases on hand</td><td><code>+1</code> unit found during verification</td></tr><tr><td>Negative quantity</td><td>Reduces on hand</td><td><code>-1</code> unit confirmed missing or damaged</td></tr></tbody></table>
+  <ul><li>Only Owner, Administrator, and Manager roles may adjust.</li><li>Every adjustment requires an active reason, unique reference, and explanation.</li><li>Use the base unit and exact lot/expiry.</li><li>A reduction cannot create negative stock.</li><li>An approval rule may send the request to Approvals instead of posting immediately.</li><li>The original ledger history is never edited.</li></ul>
+  <div className="knowledge-note"><strong>Training caution:</strong> adjustments are real inventory events. For a net-zero exercise, add 1 EA with reason Found and reference <code>TRAIN-ADJ-PLUS-001</code>, verify it, then reduce 1 EA with a suitable correction reason and reference <code>TRAIN-ADJ-MINUS-001</code>.</div>
+  <h3>Control stock status</h3>
+  <p>On Inventory Availability, authorized managers can change the status of a specific item/location/lot/expiry balance and must record a reason.</p>
+  <table className="data-table"><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody>{statuses.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td></tr>)}</tbody></table>
+  <p>A status change controls the <strong>entire displayed balance row</strong>; it does not classify only part of its quantity. To isolate part of a balance, first transfer that quantity to a dedicated Hold, Quarantine, or Damaged location, then apply the appropriate control.</p>
+  <h3>Trace lots, expiries, reservations, and serials</h3>
+  <p>Open <strong>Inventory → Traceability</strong>. The page shows inventory expiring within 90 days and active order reservations. Search by SKU, lot, or serial to review movement history. Serial searches show the unit&apos;s current status and location.</p>
+  <h3>Common mistakes</h3>
+  <ul><li>Confusing on hand with ATP.</li><li>Transferring from the wrong lot or expiry.</li><li>Using CASE when the transaction requires the base unit EA.</li><li>Adjusting inventory instead of posting the correct operational transaction.</li><li>Entering a positive number when stock should be reduced.</li><li>Changing an entire balance row to Hold when only some units require isolation.</li><li>Removing stock that is already reserved without investigating its order allocation.</li><li>Reusing vague references such as TEST or ADJ.</li></ul>
+  <h3>Practice checklist</h3>
+  <ul className="knowledge-checklist"><li>Find TRAIN-COLA-330 in Inventory Availability</li><li>Explain its on-hand, reserved, and ATP quantities</li><li>Record its exact location, lot, expiry, status, and base unit</li><li>Transfer 10 EA from Storage to Picking</li><li>Verify the balanced transfer movements and unchanged company total</li><li>Post a controlled +1 and −1 adjustment exercise if authorized</li><li>Review the resulting movement history</li><li>Search the lot in Traceability</li><li>Explain how Hold, Quarantine, Damaged, and Expired affect ATP</li></ul>
+  <div className="knowledge-checkpoint"><strong>Module 6 checkpoint</strong><p>Explain the difference between a transfer, adjustment, and status change—and why only an adjustment changes the company&apos;s total inventory.</p></div>
+</section>}
