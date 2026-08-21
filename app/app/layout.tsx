@@ -1,6 +1,6 @@
 import Link from 'next/link';import {redirect} from 'next/navigation';import {getSession} from '../../lib/auth';import {db} from '../../lib/db';export const dynamic='force-dynamic';type NavLink=[string,string,string];
 const groups:{label:string;links:NavLink[]}[]=[
-{label:'Overview',links:[['/app/dashboard','⌂','Dashboard'],['/app/approvals','✓','Approvals'],['/app/exceptions','!','Exceptions']]},
+{label:'Overview',links:[['/app/dashboard','⌂','Dashboard'],['/app/help','?','Knowledge base'],['/app/approvals','✓','Approvals'],['/app/exceptions','!','Exceptions']]},
 {label:'Master data',links:[['/app/items','□','Item master'],['/app/setup','⌘','Warehouse setup']]},
 {label:'Inbound',links:[['/app/purchasing','▤','Purchase orders'],['/app/purchasing/import','↥','PO import'],['/app/docks','⇥','Dock scheduling'],['/app/docks/mobile','▣','Gate check-in'],['/app/receiving','⇩','Receiving'],['/app/receiving/mobile','▣','Mobile receiving'],['/app/putaway/mobile','↳','Mobile putaway'],['/app/cross-dock','⇥','Cross-docking']]},
 {label:'Inventory',links:[['/app/inventory','⇄','Inventory balances'],['/app/counts','✓','Stock counts'],['/app/replenishment','↻','Replenishment'],['/app/forecasting','⌁','Forecasting'],['/app/traceability','◎','Traceability'],['/app/returns','↩','Returns']]},
