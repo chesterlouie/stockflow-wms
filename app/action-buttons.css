@@ -1,0 +1,11 @@
+.panel-heading button.button-primary,
+.panel-heading a.button-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.panel-heading button.button-primary:hover,
+.panel-heading a.button-primary:hover {
+  background: #066c4d;
+}

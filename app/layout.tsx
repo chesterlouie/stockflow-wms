@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./action-buttons.css";
 import "./mobile.css";
 import MobileRuntime from "./components/MobileRuntime";
 
