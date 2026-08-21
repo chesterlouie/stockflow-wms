@@ -20,10 +20,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const user = (await client.query(`INSERT INTO users(email,password_hash,display_name,must_change_password,email_verified_at) VALUES($1,$2,$3,false,now()) RETURNING id`, [invitation.email, await hash(password, 12), invitation.display_name])).rows[0];
       await client.query("INSERT INTO company_members(company_id,user_id,role) VALUES($1,$2,$3)", [invitation.company_id, user.id, invitation.role]);
       await client.query("UPDATE user_invitations SET accepted_at=now() WHERE id=$1", [invitation.id]);
-      await client.query(`INSERT INTO audit_logs(company_id,user_id,action,entity_type,entity_id,details) VALUES($1,$2,'user_invitation_accepted','user',$2,$3::jsonb)`, [invitation.company_id, user.id, JSON.stringify({ email: invitation.email, role: invitation.role })]);
+      await client.query(`INSERT INTO audit_logs(company_id,user_id,action,entity_type,entity_id,details) VALUES($1,$2,'user_invitation_accepted','user',$3,$4::jsonb)`, [invitation.company_id, user.id, String(user.id), JSON.stringify({ email: invitation.email, role: invitation.role })]);
     });
     return Response.redirect(new URL("/signin?invited=1", request.url), 303);
-  } catch {
-    return Response.redirect(new URL(`/invite/${token}?error=unavailable`, request.url), 303);
+  } catch (error) {
+    const code=error instanceof Error&&error.message==='LIMIT'?'limit':error instanceof Error&&error.message==='INVALID'?'unavailable':'system';
+    return Response.redirect(new URL(`/invite/${token}?error=${code}`, request.url), 303);
   }
 }
