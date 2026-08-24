@@ -2,8 +2,11 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
 
-const connectionString = process.env.DATABASE_ADMIN_URL;
-if (!connectionString) throw new Error("DATABASE_ADMIN_URL is required");
+const configuredConnectionString = process.env.DATABASE_ADMIN_URL;
+if (!configuredConnectionString) throw new Error("DATABASE_ADMIN_URL is required");
+const connectionUrl = new URL(configuredConnectionString);
+connectionUrl.pathname = `/${process.env.HOSTED_DATABASE_NAME || "neondb"}`;
+const connectionString = connectionUrl.toString();
 const bootstrap = await readFile(new URL("../database/bootstrap.sql", import.meta.url), "utf8");
 const migrations = [
   ["001_initial", new URL("../database/schema.sql", import.meta.url)],
