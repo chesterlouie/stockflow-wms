@@ -1,4 +1,4 @@
-const plans=[['Starter','₱1,490 monthly','5 users','1 warehouse'],['Growth','₱4,990 monthly','25 users','5 warehouses'],['Business','₱12,990 monthly','75 users','15 warehouses'],['Enterprise','Consultation','Custom','Custom']];
+const plans=[['Starter','₱1,200 per user / month','Up to 3 users','1 warehouse'],['Growth','₱1,200 per user / month','Up to 10 users','5 warehouses'],['Business','₱1,200 per user / month','Up to 20 users','15 warehouses'],['Enterprise',"Let's talk",'Custom','Custom']];
 const states=[['Trial','Workspace is in its introductory subscription state.'],['Active','Subscription is recognized as active.'],['Past due','Payment failed; a grace date may be shown while PayMongo retries.'],['Cancelled','Recurring subscription ended; billing suspension freezes workspace access.']];
 
 export default function ModuleFifteen(){return <section className="panel" id="module-15">

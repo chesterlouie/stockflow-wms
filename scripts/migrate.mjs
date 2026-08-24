@@ -47,6 +47,7 @@ const migrations = [
   ["036_inventory_valuation_reports", new URL("../database/migrations/036_inventory_valuation_reports.sql", import.meta.url)],
   ["037_inventory_availability_uom", new URL("../database/migrations/037_inventory_availability_uom.sql", import.meta.url)],
   ["038_uom_transaction_normalization", new URL("../database/migrations/038_uom_transaction_normalization.sql", import.meta.url)],
+  ["039_subscription_user_pricing", new URL("../database/migrations/039_subscription_user_pricing.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: "neondb" });
 console.log(`Connecting to hosted database ${client.connectionParameters.database}.`);

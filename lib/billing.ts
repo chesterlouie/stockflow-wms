@@ -1,7 +1,7 @@
 export const plans = {
-  starter: { name: "Starter", monthly: 1490, users: 5, warehouses: "1 warehouse", detail: "Core receiving, inventory, picking, and counts." },
-  growth: { name: "Growth", monthly: 4990, users: 25, warehouses: "5 warehouses", detail: "Advanced operations, reports, and ERP APIs.", featured: true },
-  business: { name: "Business", monthly: 12990, users: 75, warehouses: "15 warehouses", detail: "Higher limits, priority support, and audit controls." },
+  starter: { name: "Starter", monthly: 1200, users: 3, warehouses: "1 warehouse", detail: "Core receiving, inventory, picking, and counts." },
+  growth: { name: "Growth", monthly: 1200, users: 10, warehouses: "5 warehouses", detail: "Advanced operations, reports, and ERP APIs.", featured: true },
+  business: { name: "Business", monthly: 1200, users: 20, warehouses: "15 warehouses", detail: "Higher limits, priority support, and audit controls." },
   enterprise: { name: "Enterprise", monthly: null, users: null, warehouses: "Custom scale", detail: "Custom limits, onboarding, and service agreement." },
 } as const;
 
