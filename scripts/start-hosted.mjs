@@ -7,7 +7,14 @@ if (!adminConnection || !appPassword) {
   throw new Error("DATABASE_ADMIN_URL and APP_DB_PASSWORD are required");
 }
 
-const applicationConnection = new URL(adminConnection);
+const adminConnectionUrl = new URL(adminConnection);
+const hostedDatabaseName = process.env.HOSTED_DATABASE_NAME;
+if (hostedDatabaseName) {
+  adminConnectionUrl.pathname = `/${hostedDatabaseName}`;
+}
+process.env.DATABASE_ADMIN_URL = adminConnectionUrl.toString();
+
+const applicationConnection = new URL(process.env.DATABASE_ADMIN_URL);
 applicationConnection.username = "stockflow_app";
 applicationConnection.password = appPassword;
 process.env.DATABASE_URL = applicationConnection.toString();

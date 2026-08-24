@@ -12,6 +12,8 @@ services:
         value: 24.14.1
       - key: DATABASE_ADMIN_URL
         sync: false
+      - key: HOSTED_DATABASE_NAME
+        value: "neondb"
       - key: APP_DB_PASSWORD
         generateValue: true
       - key: APP_URL
