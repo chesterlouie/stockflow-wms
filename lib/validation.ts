@@ -32,6 +32,12 @@ export const locationSchema = z.object({
   type: z.enum(["receiving","storage","picking","packing","shipping","hold","damaged"]),
 });
 
+export const warehouseSchema = z.object({
+  code: z.string().trim().min(1).max(30).transform((value) => value.toUpperCase()),
+  name: z.string().trim().min(2).max(150),
+  timezone: z.string().trim().min(3).max(80).default("Asia/Manila"),
+});
+
 export const receiptSchema = z.object({
   warehouseId: z.string().uuid(),
   locationId: z.string().uuid(),

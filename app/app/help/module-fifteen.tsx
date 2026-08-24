@@ -16,7 +16,7 @@ export default function ModuleFifteen(){return <section className="panel" id="mo
   <h3>Current plan catalog</h3>
   <table className="data-table"><thead><tr><th>Plan</th><th>Listed price</th><th>User capacity</th><th>Warehouse offering</th></tr></thead><tbody>{plans.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td><td>{x[2]}</td><td>{x[3]}</td></tr>)}</tbody></table>
   <p>Annual billing is priced at ten monthly payments, representing two months at no additional cost. Enterprise creates a consultation request rather than online checkout.</p>
-  <div className="knowledge-note"><strong>Current enforcement boundary:</strong> user capacity is enforced when inviting or accepting users. The listed warehouse counts are presented as plan offerings, but a matching hard warehouse-creation limit is not yet enforced in the current code and must be addressed before production.</div>
+  <div className="knowledge-note"><strong>Capacity enforcement:</strong> user capacity is enforced when inviting or accepting users. Warehouse capacity is enforced when an Owner or Administrator creates a warehouse. A downgrade never deletes an existing warehouse, but no additional warehouse can be created while usage is at or above the plan allowance.</div>
   <h3>How user capacity is counted</h3>
   <p>Before a new invitation is created, Warevanta counts:</p>
   <pre className="knowledge-tree">Current company members + active, unaccepted, unrevoked invitations</pre>
