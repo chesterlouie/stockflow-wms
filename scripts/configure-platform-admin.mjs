@@ -15,13 +15,20 @@ const client = new pg.Client({ connectionString: connectionUrl.toString(), datab
 
 await client.connect();
 try {
-  const result = await client.query(
-    `INSERT INTO platform_admins(user_id)
-     SELECT id FROM users WHERE lower(email)=lower($1)
-     ON CONFLICT(user_id) DO NOTHING`,
+  await client.query("BEGIN");
+  const account = (await client.query(
+    "SELECT id FROM users WHERE lower(email)=lower($1)",
     [platformAdminEmail],
-  );
-  console.log(result.rowCount ? "Hosted platform administrator configured." : "Hosted platform administrator already configured or account not registered yet.");
+  )).rows[0];
+  if (!account) {
+    await client.query("ROLLBACK");
+    console.log("Hosted platform administrator account is not registered yet.");
+  } else {
+    await client.query("DELETE FROM platform_admins WHERE user_id<>$1", [account.id]);
+    await client.query("INSERT INTO platform_admins(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING", [account.id]);
+    await client.query("COMMIT");
+    console.log("Exclusive hosted platform administrator configured.");
+  }
 } finally {
   await client.end();
 }
