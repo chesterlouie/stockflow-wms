@@ -52,15 +52,20 @@ const client = new pg.Client({ connectionString, database: "neondb" });
 console.log(`Connecting to hosted database ${client.connectionParameters.database}.`);
 await client.connect();
 try {
+  const databaseIdentifier = `"${client.connectionParameters.database.replaceAll('"', '""')}"`;
   await client.query(bootstrap);
   await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())`);
   for (const [version,url] of migrations) {
     const sql=await readFile(url,"utf8");
+    const executableSql=sql.replace(
+      "GRANT CONNECT ON DATABASE stockflow TO stockflow_app;",
+      `GRANT CONNECT ON DATABASE ${databaseIdentifier} TO stockflow_app;`,
+    );
     const checksum=createHash("sha256").update(sql).digest("hex");
     const existing=await client.query("SELECT checksum FROM schema_migrations WHERE version=$1",[version]);
     if(existing.rows[0]){if(existing.rows[0].checksum!==checksum)throw new Error(`Migration ${version} was changed after being applied`);continue}
     await client.query("BEGIN");
-    try{await client.query(sql);await client.query("INSERT INTO schema_migrations(version,checksum) VALUES($1,$2)",[version,checksum]);await client.query("COMMIT");console.log(`Applied migration ${version}.`)}catch(error){await client.query("ROLLBACK");throw error}
+    try{await client.query(executableSql);await client.query("INSERT INTO schema_migrations(version,checksum) VALUES($1,$2)",[version,checksum]);await client.query("COMMIT");console.log(`Applied migration ${version}.`)}catch(error){await client.query("ROLLBACK");throw error}
   }
   console.log("Database is current.");
 } finally { await client.end(); }
