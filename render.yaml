@@ -5,19 +5,17 @@ services:
     plan: free
     region: singapore
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
-    startCommand: pnpm run config:validate && pnpm run db:configure-role && pnpm run db:migrate && pnpm run start -- --hostname 0.0.0.0 --port $PORT
+    startCommand: pnpm run start:hosted
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: 24.14.1
-      - key: DATABASE_URL
-        sync: false
       - key: DATABASE_ADMIN_URL
         sync: false
       - key: APP_DB_PASSWORD
-        sync: false
+        generateValue: true
       - key: APP_URL
-        sync: false
+        value: "https://warevanta-qa.onrender.com"
       - key: SESSION_SECRET
         generateValue: true
       - key: REPORT_DELIVERY_ENABLED

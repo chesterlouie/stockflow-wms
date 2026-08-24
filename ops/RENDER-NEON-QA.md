@@ -11,16 +11,8 @@ This runbook creates a temporary public QA environment. It is not a production d
 ## 1. Create the Neon database
 
 1. In Neon, create a project named `warevanta-qa` in the Singapore region when available.
-2. Copy its connection string twice. In both copies, make sure the connection string ends with `sslmode=require`.
-3. Keep one copy unchanged as `DATABASE_ADMIN_URL`.
-4. Create a random URL-safe value of at least 24 characters for `APP_DB_PASSWORD`.
-5. Create `DATABASE_URL` by changing the copied connection string's user and password to:
-
-   ```text
-   stockflow_app:<APP_DB_PASSWORD>
-   ```
-
-   Leave the database name, host, port, and `sslmode=require` unchanged. The first Warevanta start creates this restricted database user and runs all migrations.
+2. Copy its connection string. Make sure it ends with `sslmode=require`.
+3. Keep it ready as `DATABASE_ADMIN_URL`. Render generates the restricted application password, and Warevanta creates the application connection at startup.
 
 ## 2. Create the Render Blueprint
 
@@ -32,9 +24,6 @@ This runbook creates a temporary public QA environment. It is not a production d
    | Render setting | Value |
    | --- | --- |
    | `DATABASE_ADMIN_URL` | Neon admin connection string |
-   | `DATABASE_URL` | Neon connection string using `stockflow_app` and `APP_DB_PASSWORD` |
-   | `APP_DB_PASSWORD` | The random value created in step 1 |
-   | `APP_URL` | `https://warevanta-qa.onrender.com` (replace if Render assigns a different service address) |
 
 5. Create the Blueprint. The first deployment builds Warevanta, creates the application database role, applies migrations, and starts the app.
 6. When the status is **Live**, open the public service address and register a new QA workspace.
