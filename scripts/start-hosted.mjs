@@ -8,7 +8,7 @@ if (!adminConnection || !appPassword) {
 }
 
 const adminConnectionUrl = new URL(adminConnection);
-const hostedDatabaseName = process.env.HOSTED_DATABASE_NAME || "neondb";
+const hostedDatabaseName = "neondb";
 if (hostedDatabaseName) {
   adminConnectionUrl.pathname = `/${hostedDatabaseName}`;
 }
