@@ -4,7 +4,8 @@ if(!configuredConnectionString||!password)throw new Error('DATABASE_ADMIN_URL an
 const connectionUrl=new URL(configuredConnectionString);
 connectionUrl.pathname="/neondb";
 const connectionString=connectionUrl.toString();
-const client=new pg.Client({connectionString});
+const client=new pg.Client({connectionString,database:"neondb"});
+console.log(`Configuring application role in hosted database ${client.connectionParameters.database}.`);
 await client.connect();
 try{
   const sql=(await client.query(`SELECT format('ALTER ROLE stockflow_app PASSWORD %L',$1::text) AS sql`,[password])).rows[0].sql;
