@@ -1,8 +1,8 @@
 export const plans = {
-  starter: { name: "Starter", monthly: 1200, users: 3, warehouseLimit: 1, warehouses: "1 warehouse", detail: "Core receiving, inventory, picking, and counts." },
-  growth: { name: "Growth", monthly: 1200, users: 10, warehouseLimit: 5, warehouses: "5 warehouses", detail: "Advanced operations, reports, and ERP APIs.", featured: true },
-  business: { name: "Business", monthly: 1200, users: 20, warehouseLimit: 15, warehouses: "15 warehouses", detail: "Higher limits, priority support, and audit controls." },
-  enterprise: { name: "Enterprise", monthly: null, users: null, warehouseLimit: null, warehouses: "Custom scale", detail: "Custom limits, onboarding, and service agreement." },
+  starter: { name: "Starter", monthly: 1200, perUser: true, users: 3, warehouseLimit: 1, warehouses: "1 warehouse", detail: "Core receiving, inventory, picking, and counts." },
+  growth: { name: "Growth", monthly: 12000, perUser: false, users: 10, warehouseLimit: 2, warehouses: "Up to 2 warehouses", detail: "Advanced operations, reports, and ERP APIs.", featured: true },
+  business: { name: "Business", monthly: 24000, perUser: false, users: 20, warehouseLimit: 4, warehouses: "Up to 4 warehouses", detail: "Higher limits, priority support, and audit controls." },
+  enterprise: { name: "Enterprise", monthly: null, perUser: false, users: null, warehouseLimit: null, warehouses: "Custom scale", detail: "Custom limits, onboarding, and service agreement." },
 } as const;
 
 export type PlanId = keyof typeof plans;
