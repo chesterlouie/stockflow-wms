@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: warevanta-qa
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run config:validate && pnpm run db:configure-role && pnpm run db:migrate && pnpm run start -- --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_ADMIN_URL
+        sync: false
+      - key: APP_DB_PASSWORD
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: REPORT_DELIVERY_ENABLED
+        value: "false"
+      - key: SUPPORT_URL
+        value: ""
+      - key: WMS_SUPPORT_HANDOFF_SECRET
+        generateValue: true
