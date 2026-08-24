@@ -34,5 +34,6 @@ function run(args) {
 
 await run(["run", "config:validate"]);
 await run(["run", "db:migrate"]);
+await run(["run", "db:configure-platform-admin"]);
 await run(["run", "db:configure-role"]);
 await run(["run", "start", "--", "--hostname", "0.0.0.0", "--port", process.env.PORT || "3000"]);

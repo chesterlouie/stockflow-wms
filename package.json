@@ -16,6 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:verify": "node --env-file=.env.local scripts/verify-database.mjs",
+    "db:configure-platform-admin": "node scripts/configure-platform-admin.mjs",
     "db:configure-role": "node scripts/configure-app-role.mjs",
     "config:validate": "node scripts/validate-production-env.mjs",
     "config:validate:staging": "node scripts/validate-staging-env.mjs",

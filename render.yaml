@@ -18,6 +18,8 @@ services:
         generateValue: true
       - key: APP_URL
         value: "https://warevanta-qa.onrender.com"
+      - key: PLATFORM_ADMIN_EMAIL
+        value: "chesterlouie.agulo@gmail.com"
       - key: SESSION_SECRET
         generateValue: true
       - key: REPORT_DELIVERY_ENABLED
