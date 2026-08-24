@@ -14,7 +14,7 @@
     "test": "pnpm run build && pnpm exec node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:verify": "node --env-file=.env.local scripts/verify-database.mjs",
     "db:configure-role": "node scripts/configure-app-role.mjs",
     "config:validate": "node scripts/validate-production-env.mjs",
