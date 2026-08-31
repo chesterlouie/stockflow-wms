@@ -5,22 +5,22 @@
 From the Warevanta project folder on Windows:
 
 ```powershell
-.\stockflow.cmd start
+.\warevanta-wms.cmd start
 ```
 
 Other available commands:
 
 ```powershell
-.\stockflow.cmd status
-.\stockflow.cmd restart
-.\stockflow.cmd stop
+.\warevanta-wms.cmd status
+.\warevanta-wms.cmd restart
+.\warevanta-wms.cmd stop
 ```
 
 Before promoting a release, run `pnpm run staging:full`. Managed staging deployment, backup, monitoring, and rollback procedures are documented in `ops/STAGING-RUNBOOK.md`.
 
 After startup, open `https://localhost`.
 
-For a phone connected to the same Wi-Fi, set `STOCKFLOW_LAN_HOST` in the ignored
+For a phone connected to the same Wi-Fi, set `WAREVANTA_WMS_LAN_HOST` in the ignored
 production environment file to the computer's LAN IP, install the Caddy local
 root certificate on the device, and open the corresponding HTTPS address. Allow
 inbound TCP 443 only on private network profiles.

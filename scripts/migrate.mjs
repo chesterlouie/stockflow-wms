@@ -5,7 +5,7 @@ import pg from "pg";
 const configuredConnectionString = process.env.DATABASE_ADMIN_URL;
 if (!configuredConnectionString) throw new Error("DATABASE_ADMIN_URL is required");
 const connectionUrl = new URL(configuredConnectionString);
-connectionUrl.pathname = "/neondb";
+const databaseName = decodeURIComponent(connectionUrl.pathname.replace(/^\//, "") || "postgres");
 const connectionString = connectionUrl.toString();
 const bootstrap = await readFile(new URL("../database/bootstrap.sql", import.meta.url), "utf8");
 const migrations = [
@@ -49,8 +49,8 @@ const migrations = [
   ["038_uom_transaction_normalization", new URL("../database/migrations/038_uom_transaction_normalization.sql", import.meta.url)],
   ["039_subscription_user_pricing", new URL("../database/migrations/039_subscription_user_pricing.sql", import.meta.url)],
 ];
-const client = new pg.Client({ connectionString, database: "neondb" });
-console.log(`Connecting to hosted database ${client.connectionParameters.database}.`);
+const client = new pg.Client({ connectionString, database: databaseName });
+console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
 await client.connect();
 try {
   const databaseIdentifier = `"${client.connectionParameters.database.replaceAll('"', '""')}"`;

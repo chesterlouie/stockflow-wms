@@ -1,1 +1,1 @@
-& (Join-Path $PSScriptRoot 'stockflow.ps1') start
+& (Join-Path $PSScriptRoot 'warevanta-wms.ps1') start

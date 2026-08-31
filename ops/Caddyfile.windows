@@ -1,4 +1,4 @@
-localhost, {$STOCKFLOW_LAN_HOST:localhost} {
+localhost, {$WAREVANTA_WMS_LAN_HOST:localhost} {
 	tls internal
 	encode zstd gzip
 	header {
@@ -12,7 +12,23 @@ localhost, {$STOCKFLOW_LAN_HOST:localhost} {
 		root * C:/A_Tools/Projects/stockflow-wms/dist/client
 		file_server
 	}
+	handle /sw.js {
+		root * C:/A_Tools/Projects/stockflow-wms/dist/client
+		file_server
+	}
+	handle /offline.html {
+		root * C:/A_Tools/Projects/stockflow-wms/dist/client
+		file_server
+	}
+	handle /favicon.svg {
+		root * C:/A_Tools/Projects/stockflow-wms/dist/client
+		file_server
+	}
+	handle /manifest.webmanifest {
+		root * C:/A_Tools/Projects/stockflow-wms/dist/client
+		file_server
+	}
 	handle {
-		reverse_proxy 127.0.0.1:3100
+		reverse_proxy 127.0.0.1:3101
 	}
 }
