@@ -19,7 +19,7 @@ export default async function Users({ searchParams }: { searchParams: Promise<{ 
   const audit = session ? await tenantRows<Audit>(session.companyId, `SELECT a.action,a.entity_type,a.details::text,a.created_at::text,u.email AS actor FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id WHERE a.company_id=$1 ORDER BY a.created_at DESC LIMIT 30`, [session.companyId]) : [];
   const company = (session ? await tenantRows<Company>(session.companyId, "SELECT subscription_plan,max_users FROM companies WHERE id=$1", [session.companyId]) : [])[0];
   const plan = company && company.subscription_plan in plans ? plans[company.subscription_plan] : plans.starter;
-  const limit = company?.max_users ?? plan.users ?? 3;
+  const limit = company?.max_users ?? plan.users ?? 6;
   const pending = invites.filter((invite) => Date.parse(invite.expires_at) > Date.now()).length;
   const used = users.length + pending;
   const atLimit = used >= limit;
