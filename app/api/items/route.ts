@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.redirect(new URL("/app/items/new?error=invalid",request.url),303);
   try {
     await withTenant(session.companyId, async (client) => {
+      if (parsed.data.category && !(await client.query("SELECT 1 FROM item_categories WHERE company_id=$1 AND name=$2 AND active=true", [session.companyId, parsed.data.category])).rowCount) throw new Error("INVALID_CATEGORY");
       const item = (await client.query<{id:string}>(`INSERT INTO items(company_id,sku,description,category,base_uom,tracking_method,allocation_method,status,over_receipt_tolerance_percent,minimum_shelf_life_days) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`, [session.companyId,parsed.data.sku,parsed.data.name,parsed.data.category||null,parsed.data.uom,parsed.data.tracking,parsed.data.allocation,parsed.data.status,parsed.data.overReceiptTolerance,parsed.data.minimumShelfLifeDays])).rows[0];
       let barcode = parsed.data.barcode;
       if (parsed.data.barcodeMode === "auto") {
