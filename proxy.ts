@@ -73,9 +73,10 @@ export async function proxy(request:NextRequest){
     return NextResponse.redirect(new URL('/app/restricted',request.url));
   }
   const mutation=!['GET','HEAD','OPTIONS'].includes(request.method);
+  const publicAccountMutation=pathname.startsWith('/api/auth/')||/^\/api\/invitations\/[^/]+\/accept$/.test(pathname);
   const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read';
   const managerRestrictedMutation=['/api/billing','/api/integrations','/api/users','/api/invitations','/api/warehouses','/api/admin'].some(path=>pathname===path||pathname.startsWith(`${path}/`));
-  const deniedMutation=role==='viewer'&&!viewerPersonalMutation||role==='operator'&&!isOperatorMutation(pathname)||role==='manager'&&managerRestrictedMutation;
+  const deniedMutation=!publicAccountMutation&&(role==='viewer'&&!viewerPersonalMutation||role==='operator'&&!isOperatorMutation(pathname)||role==='manager'&&managerRestrictedMutation);
   if(pathname.startsWith('/api/')&&mutation&&deniedMutation){
     return NextResponse.json({error:'This action requires a manager or administrator.'},{status:403});
   }

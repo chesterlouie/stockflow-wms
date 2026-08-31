@@ -85,6 +85,9 @@ test("company roles receive matching navigation and direct-request controls", as
   assert.doesNotMatch(proxy, /operatorPagePrefixes=\[[^\]]*inventory/);
   assert.match(proxy, /viewerPersonalMutation/);
   assert.match(proxy, /managerRestrictedMutation/);
+  assert.match(proxy, /publicAccountMutation/);
+  assert.match(proxy, /pathname\.startsWith\('\/api\/auth\/'\)/);
+  assert.match(proxy, /\/api\\\/invitations\\\/\[\^\/\]\+\\\/accept/);
   for (const route of ["/api/billing", "/api/integrations", "/api/users", "/api/invitations", "/api/warehouses"])
     assert.match(proxy, new RegExp(route.replaceAll("/", "\\/")));
 });
