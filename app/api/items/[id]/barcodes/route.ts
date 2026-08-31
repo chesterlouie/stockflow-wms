@@ -6,6 +6,7 @@ import { barcodeSchema } from "../../../../../lib/validation";
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return Response.redirect(new URL("/signin", request.url), 303);
+  if (!["owner", "admin", "manager"].includes(session.role)) return new Response("Forbidden", { status: 403 });
   const { id } = await params;
   const parsed = barcodeSchema.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) return Response.redirect(new URL(`/app/items/${id}?error=invalid`, request.url), 303);

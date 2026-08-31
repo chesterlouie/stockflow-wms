@@ -37,6 +37,8 @@ const protectedRoutes = [
   ["app/api/counts/[id]/recount/route.ts", ["owner", "admin", "manager"]],
   ["app/api/items/[id]/cost/route.ts", ["owner", "admin", "manager"]],
   ["app/api/items/[id]/uom/route.ts", ["owner", "admin", "manager"]],
+  ["app/api/items/route.ts", ["owner", "admin", "manager"]],
+  ["app/api/items/[id]/barcodes/route.ts", ["owner", "admin", "manager"]],
   ["app/api/inventory/status/route.ts", ["owner", "admin", "manager"]],
 ];
 for (const [path, roles] of protectedRoutes)
@@ -59,4 +61,21 @@ test("tenant database helper always opens a transaction and sets company context
   assert.match(source, /set_config\('app\.company_id'/);
   assert.match(source, /COMMIT/);
   assert.match(source, /ROLLBACK/);
+});
+
+test("operator navigation and direct requests are limited to operational work", async () => {
+  const layout = await readFile(new URL("../app/app/layout.tsx", import.meta.url), "utf8");
+  const proxy = await readFile(new URL("../proxy.ts", import.meta.url), "utf8");
+  assert.match(layout, /session\.role==='operator'/);
+  for (const route of ["/app/receiving", "/app/inventory", "/app/fulfillment/mobile", "/app/packing/cartons", "/app/dispatch/mobile"])
+    assert.match(layout, new RegExp(route.replaceAll("/", "\\/")));
+  assert.match(proxy, /role!=='operator'/);
+  assert.match(proxy, /\/app\/restricted/);
+  assert.match(proxy, /status:403/);
+  assert.match(proxy, /\/api\/inventory\/transfer/);
+  assert.ok(proxy.includes("/^\\/api\\/orders\\/[^/]+\\/dispatch$/"));
+  assert.match(proxy, /operatorPages\.includes\(pathname\)/);
+  assert.match(proxy, /'\/app\/receiving'/);
+  assert.match(proxy, /\/app\/inventory\/transfer/);
+  assert.doesNotMatch(proxy, /operatorPagePrefixes=\[[^\]]*inventory/);
 });

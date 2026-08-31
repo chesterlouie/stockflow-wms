@@ -6,6 +6,7 @@ import { generateCompanyBarcode } from "../../../lib/barcodes";
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return Response.redirect(new URL("/signin",request.url),303);
+  if (!["owner", "admin", "manager"].includes(session.role)) return new Response("Forbidden", { status: 403 });
   const parsed = itemSchema.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) return Response.redirect(new URL("/app/items/new?error=invalid",request.url),303);
   try {
