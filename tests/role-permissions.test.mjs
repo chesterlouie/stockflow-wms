@@ -39,6 +39,8 @@ const protectedRoutes = [
   ["app/api/items/[id]/uom/route.ts", ["owner", "admin", "manager"]],
   ["app/api/items/route.ts", ["owner", "admin", "manager"]],
   ["app/api/items/[id]/barcodes/route.ts", ["owner", "admin", "manager"]],
+  ["app/api/suppliers/route.ts", ["owner", "admin", "manager"]],
+  ["app/api/suppliers/[id]/status/route.ts", ["owner", "admin", "manager"]],
   ["app/api/inventory/status/route.ts", ["owner", "admin", "manager"]],
 ];
 for (const [path, roles] of protectedRoutes)
