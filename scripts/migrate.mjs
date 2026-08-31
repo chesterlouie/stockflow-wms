@@ -49,6 +49,7 @@ const migrations = [
   ["038_uom_transaction_normalization", new URL("../database/migrations/038_uom_transaction_normalization.sql", import.meta.url)],
   ["039_subscription_user_pricing", new URL("../database/migrations/039_subscription_user_pricing.sql", import.meta.url)],
   ["040_item_categories", new URL("../database/migrations/040_item_categories.sql", import.meta.url)],
+  ["041_starter_six_user_limit", new URL("../database/migrations/041_starter_six_user_limit.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
