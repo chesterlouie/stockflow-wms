@@ -1,6 +1,7 @@
 import { getSession } from "../../../lib/auth";
 import { withTenant } from "../../../lib/db";
 import { itemSchema } from "../../../lib/validation";
+import { generateCompanyBarcode } from "../../../lib/barcodes";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -12,8 +13,7 @@ export async function POST(request: Request) {
       const item = (await client.query<{id:string}>(`INSERT INTO items(company_id,sku,description,category,base_uom,tracking_method,allocation_method,status,over_receipt_tolerance_percent,minimum_shelf_life_days) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`, [session.companyId,parsed.data.sku,parsed.data.name,parsed.data.category||null,parsed.data.uom,parsed.data.tracking,parsed.data.allocation,parsed.data.status,parsed.data.overReceiptTolerance,parsed.data.minimumShelfLifeDays])).rows[0];
       let barcode = parsed.data.barcode;
       if (parsed.data.barcodeMode === "auto") {
-        const sequence = (await client.query<{prefix:string;issued:number;pad_length:number}>(`UPDATE barcode_sequences SET next_value=next_value+1 WHERE company_id=$1 RETURNING prefix,next_value-1 AS issued,pad_length`,[session.companyId])).rows[0];
-        barcode = `${sequence.prefix}${String(sequence.issued).padStart(sequence.pad_length,"0")}`;
+        barcode = await generateCompanyBarcode(client, session.companyId, parsed.data.format);
       }
       await client.query(`INSERT INTO item_barcodes(company_id,item_id,barcode_value,barcode_format,generation_mode,uom,is_primary) VALUES($1,$2,$3,$4,$5,$6,true)`,[session.companyId,item.id,barcode,parsed.data.format,parsed.data.barcodeMode,parsed.data.uom]);
     });

@@ -50,11 +50,12 @@ export const receiptSchema = z.object({
 });
 
 export const barcodeSchema = z.object({
-  barcodeValue: z.string().trim().min(1).max(120),
+  barcodeMode: z.enum(["auto", "manual"]),
+  barcodeValue: z.string().trim().max(120).optional(),
   barcodeFormat: z.enum(["code128","ean13","upca","qr","gs1"]),
   uom: z.string().trim().min(1).max(20),
   quantityInBase: z.coerce.number().positive().max(999999999),
-});
+}).refine((value) => value.barcodeMode === "auto" || Boolean(value.barcodeValue), { message: "A barcode is required in manual mode", path: ["barcodeValue"] });
 export const uomConversionSchema=z.object({uom:z.string().trim().min(1).max(20).transform(v=>v.toUpperCase()),unitsPerBase:z.coerce.number().positive().max(999999999)});
 export const inventoryStatusSchema=z.object({warehouseId:z.string().uuid(),locationId:z.string().uuid(),itemId:z.string().uuid(),lotNumber:z.string().trim().max(100).optional(),expiryDate:z.string().optional(),status:z.enum(['available','hold','quarantine','damaged']),reason:z.string().trim().min(3).max(500)});
 
