@@ -63,13 +63,16 @@ test("tenant database helper always opens a transaction and sets company context
   assert.match(source, /ROLLBACK/);
 });
 
-test("operator navigation and direct requests are limited to operational work", async () => {
+test("company roles receive matching navigation and direct-request controls", async () => {
   const layout = await readFile(new URL("../app/app/layout.tsx", import.meta.url), "utf8");
   const proxy = await readFile(new URL("../proxy.ts", import.meta.url), "utf8");
-  assert.match(layout, /session\.role==='operator'/);
+  for (const role of ["manager", "operator", "viewer"])
+    assert.match(layout, new RegExp(`${role}:new Set`));
   for (const route of ["/app/receiving", "/app/inventory", "/app/fulfillment/mobile", "/app/packing/cartons", "/app/dispatch/mobile"])
     assert.match(layout, new RegExp(route.replaceAll("/", "\\/")));
-  assert.match(proxy, /role!=='operator'/);
+  assert.match(proxy, /role==='manager'/);
+  assert.match(proxy, /role==='operator'/);
+  assert.match(proxy, /role==='viewer'/);
   assert.match(proxy, /\/app\/restricted/);
   assert.match(proxy, /status:403/);
   assert.match(proxy, /\/api\/inventory\/transfer/);
@@ -78,4 +81,8 @@ test("operator navigation and direct requests are limited to operational work", 
   assert.match(proxy, /'\/app\/receiving'/);
   assert.match(proxy, /\/app\/inventory\/transfer/);
   assert.doesNotMatch(proxy, /operatorPagePrefixes=\[[^\]]*inventory/);
+  assert.match(proxy, /viewerPersonalMutation/);
+  assert.match(proxy, /managerRestrictedMutation/);
+  for (const route of ["/api/billing", "/api/integrations", "/api/users", "/api/invitations", "/api/warehouses"])
+    assert.match(proxy, new RegExp(route.replaceAll("/", "\\/")));
 });

@@ -29,6 +29,8 @@ type Activity = {
 type Controls={pending_approvals:string;overdue_approvals:string;exceptions:string;ready_dispatch:string;counted:string;inbound:string};
 export default async function Dashboard() {
   const s = await getSession();
+  const isSupervisor=Boolean(s&&['owner','admin','manager'].includes(s.role));
+  const isOperator=s?.role==='operator';
   const m = (s
     ? await tenantRows<Metrics>(
         s.companyId,
@@ -88,7 +90,7 @@ export default async function Dashboard() {
             {controls.overdue_approvals} overdue approvals, {controls.exceptions} fulfillment exceptions, {controls.counted} counts awaiting approval, and {m.expiring} expiring lots.
           </small>
         </div>
-        <Link href={Number(controls.overdue_approvals)?'/app/approvals':Number(controls.exceptions)?'/app/exceptions':'/app/counts'}>Review items →</Link>
+        <Link href={isSupervisor?(Number(controls.overdue_approvals)?'/app/approvals':Number(controls.exceptions)?'/app/exceptions':'/app/counts'):isOperator?'/app/receiving':'/app/reports?type=expiry'}>Review items →</Link>
       </section>
       <div className="warehouse-kpis">
         <article className="warehouse-kpi">
@@ -133,7 +135,7 @@ export default async function Dashboard() {
           </div>
         </article>
       </div>
-      <section className="warehouse-panel dashboard-controls"><div className="panel-heading"><div><h2>Operational control center</h2><p>Live queues requiring warehouse action</p></div><Link href="/app/approvals">Approval inbox →</Link></div><div className="quick-grid"><Link href="/app/approvals"><strong>{controls.pending_approvals} pending approvals</strong><small>{controls.overdue_approvals} overdue</small></Link><Link href="/app/exceptions"><strong>{controls.exceptions} fulfillment exceptions</strong><small>Short picks and controlled orders</small></Link><Link href="/app/counts"><strong>{controls.counted} counts awaiting approval</strong><small>{m.open_counts} total active counts</small></Link><Link href="/app/dispatch/mobile"><strong>{controls.ready_dispatch} orders ready to dispatch</strong><small>Packed and ready for carrier handoff</small></Link><Link href="/app/receiving"><strong>{controls.inbound} inbound receipts</strong><small>Expected through putaway</small></Link><Link href="/app/reports?type=expiry"><strong>{m.expiring} expiring balances</strong><small>Within the next 30 days</small></Link></div></section>
+      {isSupervisor&&<section className="warehouse-panel dashboard-controls"><div className="panel-heading"><div><h2>Operational control center</h2><p>Live queues requiring warehouse action</p></div><Link href="/app/approvals">Approval inbox →</Link></div><div className="quick-grid"><Link href="/app/approvals"><strong>{controls.pending_approvals} pending approvals</strong><small>{controls.overdue_approvals} overdue</small></Link><Link href="/app/exceptions"><strong>{controls.exceptions} fulfillment exceptions</strong><small>Short picks and controlled orders</small></Link><Link href="/app/counts"><strong>{controls.counted} counts awaiting approval</strong><small>{m.open_counts} total active counts</small></Link><Link href="/app/dispatch/mobile"><strong>{controls.ready_dispatch} orders ready to dispatch</strong><small>Packed and ready for carrier handoff</small></Link><Link href="/app/receiving"><strong>{controls.inbound} inbound receipts</strong><small>Expected through putaway</small></Link><Link href="/app/reports?type=expiry"><strong>{m.expiring} expiring balances</strong><small>Within the next 30 days</small></Link></div></section>}
       <div className="operations-layout">
         <section className="warehouse-panel operations-panel">
           <div className="panel-heading">
@@ -168,6 +170,7 @@ export default async function Dashboard() {
             </div>
           </div>
           <div className="warehouse-actions">
+            {isSupervisor&&<>
             <Link href="/app/receiving">
               <i>↓</i>
               <strong>Receive</strong>
@@ -188,6 +191,9 @@ export default async function Dashboard() {
               <strong>Approvals</strong>
               <small>{controls.pending_approvals} pending</small>
             </Link>
+            </>}
+            {isOperator&&<><Link href="/app/receiving"><i>↓</i><strong>Receive</strong><small>Inbound stock</small></Link><Link href="/app/fulfillment/mobile"><i>↗</i><strong>Pick &amp; pack</strong><small>Mobile fulfillment</small></Link><Link href="/app/inventory/transfer"><i>⇄</i><strong>Move stock</strong><small>Warehouse transfer</small></Link><Link href="/app/dispatch/mobile"><i>⇱</i><strong>Dispatch</strong><small>Carrier handoff</small></Link></>}
+            {!isSupervisor&&!isOperator&&<><Link href="/app/inventory"><i>⇄</i><strong>Inventory</strong><small>View balances</small></Link><Link href="/app/traceability"><i>◎</i><strong>Traceability</strong><small>Lots and serials</small></Link><Link href="/app/reports"><i>▥</i><strong>Reports</strong><small>Read-only insights</small></Link><Link href="/app/help"><i>?</i><strong>Knowledge base</strong><small>Process guidance</small></Link></>}
           </div>
         </section>
       </div>

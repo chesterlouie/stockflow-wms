@@ -18,6 +18,18 @@ const operatorPages=[
 
 const operatorPagePrefixes=['/app/receiving/','/app/cartons/'];
 
+const managerPages=[
+  '/app/dashboard','/app/help','/app/approvals','/app/exceptions','/app/items','/app/categories','/app/setup',
+  '/app/purchasing','/app/docks','/app/receiving','/app/putaway/mobile','/app/cross-dock','/app/inventory',
+  '/app/counts','/app/replenishment','/app/forecasting','/app/traceability','/app/returns','/app/orders',
+  '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile',
+  '/app/manifests','/app/labor','/app/reports','/app/report-automation','/app/delivery-history','/app/restricted',
+];
+
+const viewerPages=[
+  '/app/dashboard','/app/help','/app/inventory','/app/traceability','/app/reports','/app/restricted',
+];
+
 const operatorMutationPrefixes=[
   '/api/account/',
   '/api/auth/signout',
@@ -31,6 +43,14 @@ const operatorMutationPrefixes=[
 
 function isOperatorPage(pathname:string){
   return operatorPages.includes(pathname)||operatorPagePrefixes.some(path=>pathname.startsWith(path));
+}
+
+function isManagerPage(pathname:string){
+  return managerPages.some(path=>pathname===path||pathname.startsWith(`${path}/`));
+}
+
+function isViewerPage(pathname:string){
+  return viewerPages.includes(pathname);
 }
 
 function isOperatorMutation(pathname:string){
@@ -47,12 +67,16 @@ async function currentRole(request:NextRequest){
 
 export async function proxy(request:NextRequest){
   const role=await currentRole(request);
-  if(role!=='operator')return NextResponse.next();
   const {pathname}=request.nextUrl;
-  if(pathname.startsWith('/app/')&&!isOperatorPage(pathname)){
+  const allowedPage=role==='operator'?isOperatorPage(pathname):role==='manager'?isManagerPage(pathname):role==='viewer'?isViewerPage(pathname):true;
+  if(pathname.startsWith('/app/')&&!allowedPage){
     return NextResponse.redirect(new URL('/app/restricted',request.url));
   }
-  if(pathname.startsWith('/api/')&&!['GET','HEAD','OPTIONS'].includes(request.method)&&!isOperatorMutation(pathname)){
+  const mutation=!['GET','HEAD','OPTIONS'].includes(request.method);
+  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read';
+  const managerRestrictedMutation=['/api/billing','/api/integrations','/api/users','/api/invitations','/api/warehouses','/api/admin'].some(path=>pathname===path||pathname.startsWith(`${path}/`));
+  const deniedMutation=role==='viewer'&&!viewerPersonalMutation||role==='operator'&&!isOperatorMutation(pathname)||role==='manager'&&managerRestrictedMutation;
+  if(pathname.startsWith('/api/')&&mutation&&deniedMutation){
     return NextResponse.json({error:'This action requires a manager or administrator.'},{status:403});
   }
   return NextResponse.next();
