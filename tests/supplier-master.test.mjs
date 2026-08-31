@@ -7,6 +7,7 @@ test('supplier maintenance is controlled through Master Data',async()=>{
   const purchasing=await readFile(new URL('../app/app/purchasing/page.tsx',import.meta.url),'utf8');
   const supplierPage=await readFile(new URL('../app/app/suppliers/page.tsx',import.meta.url),'utf8');
   const importer=await readFile(new URL('../app/api/imports/purchase-orders/route.ts',import.meta.url),'utf8');
+  const knowledge=await readFile(new URL('../app/app/help/module-four.tsx',import.meta.url),'utf8');
   assert.match(layout,/Master data[^\n]+\/app\/suppliers/);
   assert.match(supplierPage,/Supplier master/);
   assert.match(supplierPage,/\/api\/suppliers\/\$\{supplier\.id\}\/status/);
@@ -15,4 +16,7 @@ test('supplier maintenance is controlled through Master Data',async()=>{
   assert.match(importer,/SELECT id FROM suppliers/);
   assert.match(importer,/status='active'/);
   assert.doesNotMatch(importer,/INSERT INTO suppliers/);
+  assert.match(knowledge,/Master data → Supplier master/);
+  assert.match(knowledge,/import cannot create suppliers/);
+  assert.match(knowledge,/Blocked/);
 });
