@@ -9,6 +9,9 @@ export default function ModuleSeven(){return <section className="panel" id="modu
   <h3>Local mobile prerequisites</h3>
   <ol><li>Keep the Warevanta computer running.</li><li>Connect the phone and computer to the same Wi-Fi network.</li><li>Open the computer&apos;s current HTTPS LAN address on the phone.</li><li>Install and fully trust the local Caddy certificate only on devices you control.</li><li>Allow Camera permission for the Warevanta site.</li><li>Disable a VPN, Private Relay, or Wi-Fi client isolation if it prevents local-device access.</li></ol>
   <div className="knowledge-note"><strong>Network addresses can change:</strong> if the computer joins another network, confirm its new LAN address and update the local HTTPS gateway before testing.</div>
+  <h3>Confirm the mobile user profile</h3>
+  <p>Before issuing a phone to an Operator, the Owner or Administrator opens <strong>Administration → Users &amp; access → Manage access scopes</strong> and assigns that user to the work warehouse. Saving the profile signs the user out everywhere; sign in again on the phone and verify the dashboard Access profile before scanning.</p>
+  <div className="knowledge-note"><strong>Store phones use a different profile:</strong> a Viewer assigned to a requesting store is redirected to the Store Request Portal. Do not use a store Viewer account for warehouse receiving, putaway, picking, packing, or dispatch.</div>
   <h3>Know which label to scan</h3>
   <table className="data-table"><thead><tr><th>Label</th><th>Encoded value</th><th>Purpose</th></tr></thead><tbody>{labels.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td><td>{x[2]}</td></tr>)}</tbody></table>
   <div className="knowledge-note"><strong>Critical distinction:</strong> a receiving-label QR code finds the receipt task. It does not confirm the item. The Confirm item barcode field requires a barcode registered against the expected SKU in Item Master.</div>
