@@ -1,0 +1,4 @@
+CREATE TABLE store_user_assignments(company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,store_id uuid NOT NULL,user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,created_by uuid REFERENCES users(id),created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(company_id,user_id),FOREIGN KEY(company_id,store_id) REFERENCES requesting_stores(company_id,id));
+ALTER TABLE store_user_assignments ENABLE ROW LEVEL SECURITY;ALTER TABLE store_user_assignments FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_store_user_assignments ON store_user_assignments USING(company_id=nullif(current_setting('app.company_id',true),'')::uuid) WITH CHECK(company_id=nullif(current_setting('app.company_id',true),'')::uuid);
+GRANT SELECT,INSERT,UPDATE,DELETE ON store_user_assignments TO stockflow_app;

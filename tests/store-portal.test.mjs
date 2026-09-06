@@ -1,0 +1,2 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {readFile} from 'node:fs/promises';const read=p=>readFile(new URL(`../${p}`,import.meta.url),'utf8');
+test('store portal is explicitly scoped by assignment',async()=>{const page=await read('app/store-portal/page.tsx');assert.match(page,/store_user_assignments/);assert.match(page,/o\.store_id=\$2/);const api=await read('app/api/store-requests/route.ts');assert.match(api,/s\.role!=='viewer'/);assert.match(api,/a\.user_id=\$2/);assert.match(api,/status:403/)});
