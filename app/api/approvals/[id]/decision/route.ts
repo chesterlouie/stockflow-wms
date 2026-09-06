@@ -255,6 +255,12 @@ async function execute(
     await reverseShipment(c, companyId, q.entity_id, userId, x.reason);
     return;
   }
+  if (q.operation_type === "item_substitution") {
+    const valid=(await c.query(`SELECT 1 FROM sales_orders o JOIN item_relationships r ON r.company_id=o.company_id WHERE o.company_id=$1 AND o.id=$2 AND o.status='new' AND r.id=$3 AND r.active AND r.approval_required`,[companyId,q.entity_id,x.relationshipId])).rowCount;
+    if(!valid)throw new Error("state");
+    await c.query(`INSERT INTO order_substitution_approvals(company_id,order_id,relationship_id,approval_request_id,approved_by) VALUES($1,$2,$3,$4,$5) ON CONFLICT(order_id,relationship_id) DO UPDATE SET approval_request_id=excluded.approval_request_id,approved_by=excluded.approved_by,approved_at=now()`,[companyId,q.entity_id,x.relationshipId,q.id,userId]);
+    return;
+  }
   throw new Error("unsupported");
 }
 

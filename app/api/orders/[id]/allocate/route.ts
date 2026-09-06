@@ -1,11 +1,13 @@
 import { getSession } from "../../../../../lib/auth";
 import { withTenant } from "../../../../../lib/db";
+import { requestSubstitutionApproval } from "../../../../../lib/approvals";
 
 type Demand={itemId:string;quantity:number;method:string;kit:boolean};
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   const s=await getSession();if(!s)return Response.redirect(new URL('/signin',request.url),303);
   const {id}=await params;
+  let approvalId='';
   try{
     await withTenant(s.companyId,async c=>{
       const order=(await c.query(`SELECT * FROM sales_orders WHERE company_id=$1 AND id=$2 AND status='new' FOR UPDATE`,[s.companyId,id])).rows[0];
@@ -22,7 +24,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         }
         for(const demand of demands){
           let remaining=demand.quantity;
-          const substitutes=(await c.query(`SELECT r.target_item_id AS item_id,r.conversion_ratio,true AS substitute FROM item_relationships r JOIN items i ON i.company_id=r.company_id AND i.id=r.target_item_id AND i.status='active' WHERE r.company_id=$1 AND r.source_item_id=$2 AND r.relationship_type IN('substitute','reciprocal_substitute','superseded_by') AND r.active AND NOT r.approval_required AND (r.effective_from IS NULL OR r.effective_from<=current_date) AND (r.effective_to IS NULL OR r.effective_to>=current_date) ORDER BY r.priority,r.created_at`,[s.companyId,demand.itemId])).rows;
+          const substitutes=(await c.query(`SELECT r.target_item_id AS item_id,r.conversion_ratio,true AS substitute FROM item_relationships r JOIN items i ON i.company_id=r.company_id AND i.id=r.target_item_id AND i.status='active' WHERE r.company_id=$1 AND r.source_item_id=$2 AND r.relationship_type IN('substitute','reciprocal_substitute','superseded_by') AND r.active AND (NOT r.approval_required OR EXISTS(SELECT 1 FROM order_substitution_approvals osa WHERE osa.company_id=r.company_id AND osa.order_id=$3 AND osa.relationship_id=r.id)) AND (r.effective_from IS NULL OR r.effective_from<=current_date) AND (r.effective_to IS NULL OR r.effective_to>=current_date) ORDER BY r.priority,r.created_at`,[s.companyId,demand.itemId,id])).rows;
           const candidates=[{item_id:demand.itemId,conversion_ratio:1,substitute:false},...substitutes];
           for(const candidate of candidates){
             if(remaining<=0)break;
@@ -39,12 +41,22 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
               remaining-=fulfilled;
             }
           }
-          if(remaining>0.000001)throw new Error('INSUFFICIENT_STOCK');
+          if(remaining>0.000001){
+            const controlled=(await c.query(`SELECT r.id,r.target_item_id,r.conversion_ratio,source.sku AS requested_sku,target.sku AS substitute_sku FROM item_relationships r JOIN items source ON source.company_id=r.company_id AND source.id=r.source_item_id JOIN items target ON target.company_id=r.company_id AND target.id=r.target_item_id AND target.status='active' WHERE r.company_id=$1 AND r.source_item_id=$2 AND r.relationship_type IN('substitute','reciprocal_substitute','superseded_by') AND r.active AND r.approval_required AND (r.effective_from IS NULL OR r.effective_from<=current_date) AND (r.effective_to IS NULL OR r.effective_to>=current_date) AND (SELECT coalesce(sum(a.available_to_promise),0) FROM inventory_availability a WHERE a.company_id=r.company_id AND a.warehouse_id=$3 AND a.item_id=r.target_item_id AND a.stock_status='available') >= $4*r.conversion_ratio ORDER BY r.priority LIMIT 1`,[s.companyId,demand.itemId,order.warehouse_id,remaining])).rows[0];
+            if(controlled){
+              await c.query(`DELETE FROM pick_tasks WHERE allocation_id IN(SELECT a.id FROM stock_allocations a JOIN sales_order_lines ol ON ol.id=a.order_line_id WHERE ol.order_id=$1)`,[id]);
+              await c.query(`DELETE FROM stock_allocations WHERE order_line_id IN(SELECT id FROM sales_order_lines WHERE order_id=$1)`,[id]);
+              await c.query(`UPDATE sales_order_lines SET allocated_quantity=0 WHERE order_id=$1`,[id]);
+              approvalId=await requestSubstitutionApproval(c,{companyId:s.companyId,userId:s.userId,orderId:id,relationshipId:controlled.id,quantity:remaining,payload:{requestedSku:controlled.requested_sku,substituteSku:controlled.substitute_sku,conversionRatio:controlled.conversion_ratio,requiredQuantity:remaining}});
+              return;
+            }
+            throw new Error('INSUFFICIENT_STOCK');
+          }
         }
         await c.query(`UPDATE sales_order_lines SET allocated_quantity=ordered_quantity WHERE id=$1`,[line.id]);
       }
-      await c.query(`UPDATE sales_orders SET status='allocated' WHERE id=$1`,[id]);
+      if(!approvalId)await c.query(`UPDATE sales_orders SET status='allocated' WHERE id=$1`,[id]);
     });
-    return Response.redirect(new URL(`/app/orders/${id}?allocated=1`,request.url),303);
+    return Response.redirect(new URL(approvalId?`/app/approvals?requested=${approvalId}`:`/app/orders/${id}?allocated=1`,request.url),303);
   }catch(e){const m=e instanceof Error?e.message:'';const code=m==='INSUFFICIENT_STOCK'?'stock':m==='KIT_EMPTY'?'kit':'allocate';return Response.redirect(new URL(`/app/orders/${id}?error=${code}`,request.url),303)}
 }

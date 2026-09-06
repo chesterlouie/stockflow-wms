@@ -15,6 +15,7 @@ type Q = {
   escalation_hours: string;
   overdue:boolean;
   can_approve:boolean;
+  payload:Record<string,unknown>;
 };
 type Rule = {
   id: string;
@@ -35,7 +36,7 @@ export default async function Approvals() {
   const rows = s
     ? await tenantRows<Q>(
         s.companyId,
-        `SELECT q.id,q.operation_type,q.entity_id,q.metric_quantity::text,q.status,q.current_step::text,q.requested_at::text,u.display_name requester,rs.approver_role,r.name rule_name,r.escalation_hours::text,(q.status='pending' AND q.requested_at+(r.escalation_hours||' hours')::interval<now()) overdue,(rs.approver_role=$3 OR EXISTS(SELECT 1 FROM approval_delegations d JOIN company_members dm ON dm.company_id=d.company_id AND dm.user_id=d.delegator_id WHERE d.company_id=q.company_id AND d.delegate_id=$2 AND d.active=true AND now() BETWEEN d.starts_at AND d.ends_at AND dm.role=rs.approver_role)) can_approve FROM approval_requests q JOIN approval_rules r ON r.id=q.rule_id JOIN approval_rule_steps rs ON rs.rule_id=r.id AND rs.step_no=q.current_step LEFT JOIN users u ON u.id=q.requested_by WHERE q.company_id=$1 ORDER BY q.status='pending' DESC,q.requested_at`,
+        `SELECT q.id,q.operation_type,q.entity_id,q.metric_quantity::text,q.status,q.current_step::text,q.requested_at::text,q.payload,u.display_name requester,rs.approver_role,r.name rule_name,r.escalation_hours::text,(q.status='pending' AND q.requested_at+(r.escalation_hours||' hours')::interval<now()) overdue,(rs.approver_role=$3 OR EXISTS(SELECT 1 FROM approval_delegations d JOIN company_members dm ON dm.company_id=d.company_id AND dm.user_id=d.delegator_id WHERE d.company_id=q.company_id AND d.delegate_id=$2 AND d.active=true AND now() BETWEEN d.starts_at AND d.ends_at AND dm.role=rs.approver_role)) can_approve FROM approval_requests q JOIN approval_rules r ON r.id=q.rule_id JOIN approval_rule_steps rs ON rs.rule_id=r.id AND rs.step_no=q.current_step LEFT JOIN users u ON u.id=q.requested_by WHERE q.company_id=$1 ORDER BY q.status='pending' DESC,q.requested_at`,
         [s.companyId,s.userId,s.role],
       )
     : [];
@@ -81,6 +82,7 @@ export default async function Approvals() {
                     {q.metric_quantity && `Quantity ${q.metric_quantity} · `}
                     {new Date(q.requested_at).toLocaleString()}
                   </small>
+                  {q.operation_type==='item_substitution'&&<small><strong>{String(q.payload.requestedSku||'Requested item')} → {String(q.payload.substituteSku||'Substitute')}</strong> · Required {String(q.payload.requiredQuantity||q.metric_quantity||'—')} · Ratio {String(q.payload.conversionRatio||'1')}</small>}
                 </div>
                 {q.status === "pending" && q.can_approve && (
                   <form
@@ -151,6 +153,7 @@ export default async function Approvals() {
                 <option value="purchase_order_release">
                   Purchase order release
                 </option>
+                <option value="item_substitution">Item substitution</option>
               </select>
               <input
                 name="thresholdQuantity"

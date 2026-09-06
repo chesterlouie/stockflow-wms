@@ -52,6 +52,7 @@ const migrations = [
   ["041_starter_six_user_limit", new URL("../database/migrations/041_starter_six_user_limit.sql", import.meta.url)],
   ["042_item_kits_and_relationships", new URL("../database/migrations/042_item_kits_and_relationships.sql", import.meta.url)],
   ["043_kit_substitute_allocation", new URL("../database/migrations/043_kit_substitute_allocation.sql", import.meta.url)],
+  ["044_substitution_approvals", new URL("../database/migrations/044_substitution_approvals.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
