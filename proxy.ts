@@ -19,7 +19,7 @@ const operatorPages=[
 const operatorPagePrefixes=['/app/receiving/','/app/cartons/'];
 
 const managerPages=[
-  '/app/dashboard','/app/help','/app/approvals','/app/exceptions','/app/items','/app/categories','/app/suppliers','/app/setup',
+  '/app/dashboard','/app/help','/app/approvals','/app/exceptions','/app/items','/app/categories','/app/suppliers','/app/stores','/app/setup',
   '/app/purchasing','/app/docks','/app/receiving','/app/putaway/mobile','/app/cross-dock','/app/inventory',
   '/app/counts','/app/replenishment','/app/forecasting','/app/traceability','/app/returns','/app/orders',
   '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile',
@@ -74,7 +74,7 @@ export async function proxy(request:NextRequest){
   }
   const mutation=!['GET','HEAD','OPTIONS'].includes(request.method);
   const publicAccountMutation=pathname.startsWith('/api/auth/')||/^\/api\/invitations\/[^/]+\/accept$/.test(pathname);
-  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read';
+  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read'||pathname.startsWith('/api/support/');
   const managerRestrictedMutation=['/api/billing','/api/integrations','/api/users','/api/invitations','/api/warehouses','/api/admin'].some(path=>pathname===path||pathname.startsWith(`${path}/`));
   const deniedMutation=!publicAccountMutation&&(role==='viewer'&&!viewerPersonalMutation||role==='operator'&&!isOperatorMutation(pathname)||role==='manager'&&managerRestrictedMutation);
   if(pathname.startsWith('/api/')&&mutation&&deniedMutation){
