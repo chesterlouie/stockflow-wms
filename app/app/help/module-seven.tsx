@@ -12,7 +12,7 @@ export default function ModuleSeven(){return <section className="panel" id="modu
   <h3>Know which label to scan</h3>
   <table className="data-table"><thead><tr><th>Label</th><th>Encoded value</th><th>Purpose</th></tr></thead><tbody>{labels.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td><td>{x[2]}</td></tr>)}</tbody></table>
   <div className="knowledge-note"><strong>Critical distinction:</strong> a receiving-label QR code finds the receipt task. It does not confirm the item. The Confirm item barcode field requires a barcode registered against the expected SKU in Item Master.</div>
-  <p>Location labels are available from <strong>Master data → Warehouse setup</strong>. Print one location or all active locations in a warehouse as QR or Code 128. Both formats encode only the exact Warevanta location code shown in human-readable text.</p>
+  <p>Location labels are available from <strong>Master data → Warehouse setup</strong>. Select <strong>Print label</strong> for one location or <strong>Print all locations</strong> for a warehouse, choose QR or Code 128, review the preview, and print. See Chapter 6, <strong>How to print location labels</strong>, for the complete printer, placement, and scan-verification procedure.</p>
   <h3>Supported camera formats</h3>
   <table className="data-table"><thead><tr><th>Format</th><th>Typical use</th></tr></thead><tbody>{formats.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td></tr>)}</tbody></table>
   <p>Use <strong>Item Master → Print label</strong> to create screen-ready or printable item labels. A phone cannot scan a barcode displayed on its own screen; use another screen or a printed label.</p>
