@@ -40,6 +40,9 @@ export default function ModuleSix(){return <section className="panel" id="module
   <p>A status change controls the <strong>entire displayed balance row</strong>; it does not classify only part of its quantity. To isolate part of a balance, first transfer that quantity to a dedicated Hold, Quarantine, or Damaged location, then apply the appropriate control.</p>
   <h3>Trace lots, expiries, reservations, and serials</h3>
   <p>Open <strong>Inventory → Traceability</strong>. The page shows inventory expiring within 90 days and active order reservations. Search by SKU, lot, or serial to review movement history. Serial searches show the unit&apos;s current status and location.</p>
+  <h3>Understand kit availability and substitute reservations</h3>
+  <p>A virtual kit has no finished-goods on-hand balance. Its <strong>Buildable now</strong> quantity is the lowest whole-kit capacity among all required components in that warehouse. Optional components are excluded. When a substitute is allocated, Reserved and ATP change against the <strong>actual substitute SKU</strong>, while the allocation retains the originally demanded SKU for traceability.</p>
+  <div className="knowledge-note"><strong>Example:</strong> if one kit needs 2 × PART-A and 3 × PART-B, ATP of 10 PART-A and 12 PART-B supports min(10÷2, 12÷3) = <strong>4 complete kits</strong>.</div>
   <h3>Common mistakes</h3>
   <ul><li>Confusing on hand with ATP.</li><li>Transferring from the wrong lot or expiry.</li><li>Using CASE when the transaction requires the base unit EA.</li><li>Adjusting inventory instead of posting the correct operational transaction.</li><li>Entering a positive number when stock should be reduced.</li><li>Changing an entire balance row to Hold when only some units require isolation.</li><li>Removing stock that is already reserved without investigating its order allocation.</li><li>Reusing vague references such as TEST or ADJ.</li></ul>
   <h3>Practice checklist</h3>

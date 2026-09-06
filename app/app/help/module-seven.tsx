@@ -28,6 +28,7 @@ export default function ModuleSeven(){return <section className="panel" id="modu
   <p>Warevanta rejects a source, item, or destination that does not match the task. Confirm only after the stock is physically ready to move.</p>
   <h3>Mobile pick and pack</h3>
   <ul><li><strong>Pick:</strong> scan the assigned source location and item barcode.</li><li><strong>Pack:</strong> scan the packing destination, select an open carton, and scan the item barcode.</li><li><strong>Short pick:</strong> report the exception instead of confirming inventory that is missing, damaged, wrong, or inaccessible.</li></ul>
+  <p>For a virtual kit, the mobile queue shows separate tasks for its physical components. If Warevanta allocated a substitute, scan the barcode of the <strong>actual displayed substitute SKU</strong>, not the ordered kit, requested component, or superseded item. The system preserves the requested-versus-picked relationship in the allocation history.</p>
   <h3>Mobile dispatch and dock work</h3>
   <ul><li>Dispatch verifies the packing location, carrier, and tracking/reference before inventory leaves the warehouse.</li><li>Gate and dock check-in can find work using appointment, vehicle, or dock references and advances the appointment through its permitted status sequence.</li></ul>
   <h3>Camera technique</h3>
