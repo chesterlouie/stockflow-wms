@@ -27,10 +27,14 @@ type Activity = {
   occurred_at: string;
 };
 type Controls={pending_approvals:string;overdue_approvals:string;exceptions:string;ready_dispatch:string;counted:string;inbound:string};
+type AccessWarehouse={code:string;name:string};
 export default async function Dashboard() {
   const s = await getSession();
   const isSupervisor=Boolean(s&&['owner','admin','manager'].includes(s.role));
   const isOperator=s?.role==='operator';
+  const warehouseScope=s&&s.role!=='owner'
+    ? await tenantRows<AccessWarehouse>(s.companyId,`SELECT w.code,w.name FROM user_warehouse_assignments a JOIN warehouses w ON w.id=a.warehouse_id WHERE a.company_id=$1 AND a.user_id=$2 AND w.is_active=true ORDER BY w.name`,[s.companyId,s.userId])
+    : [];
   const m = (s
     ? await tenantRows<Metrics>(
         s.companyId,
@@ -82,6 +86,14 @@ export default async function Dashboard() {
           <p>Live operations and inventory health for your company space.</p>
         </div>
       </div>
+      <section className="attention-banner">
+        <span className="attention-icon">✓</span>
+        <div>
+          <strong>Access profile</strong>
+          <small>{s?.role==='owner'?'All company warehouses · Owner':warehouseScope.length?`${warehouseScope.map((w)=>`${w.code} — ${w.name}`).join(' · ')} · ${s?.role}`:`No warehouse assigned · ${s?.role}. Ask an owner or administrator to update Users and access.`}</small>
+        </div>
+        {isSupervisor&&<Link href="/app/users/access">Manage access →</Link>}
+      </section>
       <section className="attention-banner">
         <span className="attention-icon">!</span>
         <div>
