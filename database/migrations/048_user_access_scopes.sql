@@ -1,0 +1,4 @@
+CREATE TABLE user_warehouse_assignments(company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,warehouse_id uuid NOT NULL,user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,created_by uuid REFERENCES users(id),created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(company_id,user_id,warehouse_id),FOREIGN KEY(company_id,warehouse_id) REFERENCES warehouses(company_id,id));
+ALTER TABLE user_warehouse_assignments ENABLE ROW LEVEL SECURITY;ALTER TABLE user_warehouse_assignments FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_user_warehouse_assignments ON user_warehouse_assignments USING(company_id=nullif(current_setting('app.company_id',true),'')::uuid) WITH CHECK(company_id=nullif(current_setting('app.company_id',true),'')::uuid);
+GRANT SELECT,INSERT,UPDATE,DELETE ON user_warehouse_assignments TO stockflow_app;

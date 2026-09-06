@@ -27,7 +27,7 @@ export default async function Users({ searchParams }: { searchParams: Promise<{ 
   const errorMessage = params.error === "limit" ? `${plan.name} allows ${limit} users. Active users and unexpired pending invitations currently reserve all available slots.` : params.error === "exists" ? "That email already belongs to an existing Warevanta user." : params.error ? "The invitation could not be completed. Check the entered details." : null;
 
   return <div className="app-content">
-    <div className="page-heading"><div><h1>Users and access</h1><p>Manage warehouse roles, invitations, sessions, and security history.</p></div><Link className="button button-secondary" href="/app/billing">Review plan</Link></div>
+    <div className="page-heading"><div><h1>Users and access</h1><p>Manage roles, warehouse and store scopes, invitations, sessions, and security history.</p></div><div className="inline-actions">{canManage&&<Link className="button button-primary" href="/app/users/access">Manage access scopes</Link>}<Link className="button button-secondary" href="/app/billing">Review plan</Link></div></div>
     {params.updated && <div className="success-banner">The user or invitation was updated successfully.</div>}
     {errorMessage && <div className="form-error">{errorMessage}</div>}
     {atLimit && <div className="warehouse-limit-banner" role="alert"><div><strong>{plan.name} user limit reached</strong><span>{used} of {limit} slots reserved · {users.length} active user{users.length === 1 ? "" : "s"} · {pending} pending invitation{pending === 1 ? "" : "s"}.</span></div><Link href="/app/billing" className="button button-primary">Review upgrade options</Link></div>}

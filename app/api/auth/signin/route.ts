@@ -20,6 +20,7 @@ export async function POST(request:Request){
   if(mfa?.enabled){const challenge=randomToken();await db().query(`INSERT INTO mfa_login_challenges(token_hash,user_id,company_id,expires_at) VALUES($1,$2,$3,now()+interval '5 minutes')`,[await hashToken(challenge),user.id,user.company_id]);return new Response(null,{status:303,headers:{Location:new URL('/two-factor',request.url).toString(),'Set-Cookie':`warevanta_mfa=${challenge}; Path=/; HttpOnly; SameSite=Strict; Max-Age=300${process.env.NODE_ENV==='production'?'; Secure':''}`}})}
   const token=await createSession({userId:user.id,companyId:user.company_id,email:parsed.data.email,role:user.role});
   await withTenant(user.company_id,c=>c.query(`INSERT INTO audit_logs(company_id,user_id,action,entity_type,entity_id) VALUES($1,$2,'signin','session',$3)`,[user.company_id,user.id,user.id]));
-  const target=user.must_change_password?'/account/password':user.is_platform_admin?'/admin':'/app/dashboard';
+  const storeProfile=user.role==='viewer'&&Boolean((await db().query('SELECT 1 FROM store_user_assignments WHERE company_id=$1 AND user_id=$2',[user.company_id,user.id])).rowCount);
+  const target=user.must_change_password?'/account/password':user.is_platform_admin?'/admin':storeProfile?'/store-portal':'/app/dashboard';
   return new Response(null,{status:303,headers:{Location:new URL(target,request.url).toString(),'Set-Cookie':sessionCookie(token)}});
 }
