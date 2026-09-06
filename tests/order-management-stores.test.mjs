@@ -1,0 +1,5 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {readFile} from 'node:fs/promises';
+const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
+test('requesting stores are tenant isolated and linked to sales orders',async()=>{const migration=await read('database/migrations/045_order_management_stores.sql');assert.match(migration,/CREATE TABLE requesting_stores/);assert.match(migration,/ENABLE ROW LEVEL SECURITY/);assert.match(migration,/sales_orders_company_store_fk/)});
+test('store maintenance and order creation enforce management roles',async()=>{for(const path of ['app/api/stores/route.ts','app/api/stores/[id]/status/route.ts','app/api/orders/route.ts']){const source=await read(path);assert.match(source,/owner/);assert.match(source,/admin/);assert.match(source,/manager/);assert.match(source,/status:403/)}});
+test('order screen captures active requesting stores',async()=>{const page=await read('app/app/orders/page.tsx');assert.match(page,/Requesting stores/);assert.match(page,/requesting_stores/);assert.match(page,/storeId/)});
