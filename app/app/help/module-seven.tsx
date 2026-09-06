@@ -12,7 +12,10 @@ export default function ModuleSeven(){return <section className="panel" id="modu
   <h3>Know which label to scan</h3>
   <table className="data-table"><thead><tr><th>Label</th><th>Encoded value</th><th>Purpose</th></tr></thead><tbody>{labels.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td><td>{x[2]}</td></tr>)}</tbody></table>
   <div className="knowledge-note"><strong>Critical distinction:</strong> a receiving-label QR code finds the receipt task. It does not confirm the item. The Confirm item barcode field requires a barcode registered against the expected SKU in Item Master.</div>
-  <p>Location labels are available from <strong>Master data → Warehouse setup</strong>. Select <strong>Print label</strong> for one location or <strong>Print all locations</strong> for a warehouse, choose QR or Code 128, review the preview, and print. See Chapter 6, <strong>How to print location labels</strong>, for the complete printer, placement, and scan-verification procedure.</p>
+  <h3>Location label printing — where to find it</h3>
+  <p><a href="/app/setup"><strong>Open Master data → Warehouse setup now</strong></a>. Location-label printing is not under Inventory balances or Item Master.</p>
+  <ol><li>Find the warehouse and its Locations table.</li><li>Select <strong>Print label</strong> beside one location, or <strong>Print all locations</strong> beside the warehouse.</li><li>Choose QR or Code 128 and verify the location code in the preview.</li><li>Select <strong>Print location label</strong>, then print at 100% scale.</li><li>Attach it to the matching physical bin, rack, dock, or work area and test-scan it.</li></ol>
+  <p>For label design, placement, printer setup, and control rules, open Chapter 6 and go to <a href="#location-label-printing"><strong>Location label printing — exact steps</strong></a>.</p>
   <h3>Supported camera formats</h3>
   <table className="data-table"><thead><tr><th>Format</th><th>Typical use</th></tr></thead><tbody>{formats.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td></tr>)}</tbody></table>
   <p>Use <strong>Item Master → Print label</strong> to create screen-ready or printable item labels. A phone cannot scan a barcode displayed on its own screen; use another screen or a printed label.</p>
