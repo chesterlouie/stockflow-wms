@@ -24,7 +24,11 @@ export const itemSchema = z.object({
   allocation: z.enum(["fifo", "fefo", "lifo"]),
   overReceiptTolerance: z.coerce.number().min(0).max(100).default(0),
   minimumShelfLifeDays: z.coerce.number().int().min(0).max(3650).default(0),
+  itemType: z.enum(["standard","spare_part","virtual_kit","stocked_kit"]).default("standard"),
 }).refine((value) => value.barcodeMode === "auto" || Boolean(value.barcode), { message: "A barcode is required in manual mode", path: ["barcode"] });
+
+export const kitComponentSchema=z.object({componentItemId:z.string().uuid(),quantity:z.coerce.number().positive().max(999999999),uom:z.string().trim().min(1).max(20).transform(v=>v.toUpperCase()),optional:z.string().optional()});
+export const itemRelationshipSchema=z.object({targetItemId:z.string().uuid(),relationshipType:z.enum(['substitute','reciprocal_substitute','superseded_by','compatible_with']),conversionRatio:z.coerce.number().positive().max(999999999).default(1),priority:z.coerce.number().int().min(1).max(9999).default(100),effectiveFrom:z.string().optional(),effectiveTo:z.string().optional(),approvalRequired:z.string().optional(),notes:z.string().trim().max(500).optional()}).refine(v=>!v.effectiveFrom||!v.effectiveTo||v.effectiveTo>=v.effectiveFrom,{message:'End date must not precede start date',path:['effectiveTo']});
 
 export const locationSchema = z.object({
   warehouseId: z.string().uuid(),
