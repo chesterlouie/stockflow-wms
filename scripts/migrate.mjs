@@ -59,6 +59,7 @@ const migrations = [
   ["048_user_access_scopes", new URL("../database/migrations/048_user_access_scopes.sql", import.meta.url)],
   ["049_store_inventory_portal", new URL("../database/migrations/049_store_inventory_portal.sql", import.meta.url)],
   ["050_store_user_roles", new URL("../database/migrations/050_store_user_roles.sql", import.meta.url)],
+  ["051_store_portal_workspace", new URL("../database/migrations/051_store_portal_workspace.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
