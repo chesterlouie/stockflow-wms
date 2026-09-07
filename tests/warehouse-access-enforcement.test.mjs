@@ -96,3 +96,20 @@ test('replenishment, forecasting, returns, and traceability respect warehouse as
   for(const path of guarded)assert.match(await read(path),/assert(?:Warehouse|Location)Access/,`${path} must guard direct warehouse actions`);
   assert.match(await read('app/api/replenishment/generate/route.ts'),/user_warehouse_assignments/);
 });
+
+test('dock, appointment, cross-dock, and labor work respects warehouse assignments',async()=>{
+  const pages=['app/app/docks/page.tsx','app/app/docks/mobile/page.tsx','app/app/cross-dock/page.tsx','app/app/labor/page.tsx'];
+  for(const path of pages)assert.match(await read(path),/user_warehouse_assignments/,`${path} must scope visible warehouse work`);
+  const guarded=['app/api/docks/route.ts','app/api/appointments/route.ts','app/api/appointments/[id]/status/route.ts','app/api/cross-dock/[id]/complete/route.ts','app/api/labor/assignments/route.ts','app/api/labor/assignments/[id]/event/route.ts','app/api/labor/shifts/route.ts'];
+  for(const path of guarded)assert.match(await read(path),/assertWarehouseAccess/,`${path} must guard direct warehouse actions`);
+  assert.match(await read('app/api/cross-dock/generate/route.ts'),/user_warehouse_assignments/);
+});
+
+test('dashboard, report screens, and report exports scope operational warehouse data',async()=>{
+  for(const path of ['app/app/dashboard/page.tsx','app/app/reports/page.tsx','app/api/reports/export/route.ts']){
+    const source=await read(path);
+    assert.match(source,/user_warehouse_assignments/,`${path} must scope warehouse data`);
+    assert.match(source,/s\.role/,`${path} must preserve the owner override`);
+    assert.match(source,/s\.userId/,`${path} must bind the signed-in user`);
+  }
+});
