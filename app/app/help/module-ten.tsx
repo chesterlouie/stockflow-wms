@@ -12,6 +12,7 @@ export default function ModuleTen(){return <section className="panel" id="module
   <p>In a <strong>blind count</strong>, the system quantity stays hidden until the operator submits the physical quantity. This reduces the temptation to copy or “count toward” the expected value. In a <strong>visible count</strong>, the expected quantity is shown while counting. Blind counting is recommended for reliable verification.</p>
   <h3>Plan a safe training count</h3>
   <p>Open <strong>Inventory control → Inventory counts</strong>. Choose a quiet location holding TRAIN-COLA-330 and create:</p>
+  <p className="knowledge-note"><strong>Warehouse access:</strong> Count plans, schedules, locations, entries, recounts, and approvals are limited to the user’s approved warehouses. If a count is missing or opens as unavailable, ask an Owner or Administrator to verify the access profile.</p>
   <table className="data-table"><tbody><tr><th>Count number</th><td>TRAIN-COUNT-001</td></tr><tr><th>Type</th><td>Cycle count</td></tr><tr><th>Warehouse</th><td>The warehouse containing the training stock</td></tr><tr><th>Location</th><td>The exact Storage or Picking location to count</td></tr><tr><th>Blind count</th><td>Enabled</td></tr></tbody></table>
   <p>The count captures the current system quantity for each eligible inventory balance in scope. A scope with no eligible balances cannot create a count.</p>
   <h3>Control warehouse activity during counting</h3>

@@ -1,6 +1,7 @@
 import { getSession } from "../../../../../lib/auth";
 import { withTenant } from "../../../../../lib/db";
 import { requestApproval } from "../../../../../lib/approvals";
+import { assertWarehouseAccess } from "../../../../../lib/warehouse-access";
 
 export async function POST(
   request: Request,
@@ -21,6 +22,7 @@ export async function POST(
         )
       ).rows[0];
       if (!count) throw new Error("INVALID");
+      await assertWarehouseAccess(c,s,count.warehouse_id);
       const lines = (
         await c.query(
           `SELECT * FROM inventory_count_lines WHERE company_id=$1 AND count_id=$2 FOR UPDATE`,

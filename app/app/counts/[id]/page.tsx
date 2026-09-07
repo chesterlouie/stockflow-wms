@@ -37,8 +37,8 @@ export default async function CountPage({
   const counts = s
     ? await tenantRows<Count>(
         s.companyId,
-        `SELECT c.id,c.count_no,c.count_type,c.status,c.blind_count,w.name AS warehouse,l.code AS location FROM inventory_counts c JOIN warehouses w ON w.id=c.warehouse_id LEFT JOIN locations l ON l.id=c.location_id WHERE c.company_id=$1 AND c.id=$2`,
-        [s.companyId, id],
+        `SELECT c.id,c.count_no,c.count_type,c.status,c.blind_count,w.name AS warehouse,l.code AS location FROM inventory_counts c JOIN warehouses w ON w.id=c.warehouse_id LEFT JOIN locations l ON l.id=c.location_id WHERE c.company_id=$1 AND c.id=$2 AND ($3='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments ua WHERE ua.company_id=c.company_id AND ua.user_id=$4 AND ua.warehouse_id=c.warehouse_id))`,
+        [s.companyId,id,s.role,s.userId],
       )
     : [];
   const c = counts[0];

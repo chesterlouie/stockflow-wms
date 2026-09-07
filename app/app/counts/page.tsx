@@ -26,25 +26,25 @@ export default async function Counts({
   const counts = s
     ? await tenantRows<Count>(
         s.companyId,
-        `SELECT c.id,c.count_no,c.count_type,c.status,w.name AS warehouse,l.code AS location,count(cl.id)::text AS lines,count(cl.id) FILTER(WHERE cl.status<>'pending')::text AS counted FROM inventory_counts c JOIN warehouses w ON w.id=c.warehouse_id LEFT JOIN locations l ON l.id=c.location_id LEFT JOIN inventory_count_lines cl ON cl.count_id=c.id WHERE c.company_id=$1 GROUP BY c.id,w.name,l.code ORDER BY c.created_at DESC`,
-        [s.companyId],
+        `SELECT c.id,c.count_no,c.count_type,c.status,w.name AS warehouse,l.code AS location,count(cl.id)::text AS lines,count(cl.id) FILTER(WHERE cl.status<>'pending')::text AS counted FROM inventory_counts c JOIN warehouses w ON w.id=c.warehouse_id LEFT JOIN locations l ON l.id=c.location_id LEFT JOIN inventory_count_lines cl ON cl.count_id=c.id WHERE c.company_id=$1 AND ($2='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments ua WHERE ua.company_id=c.company_id AND ua.user_id=$3 AND ua.warehouse_id=c.warehouse_id)) GROUP BY c.id,w.name,l.code ORDER BY c.created_at DESC`,
+        [s.companyId,s.role,s.userId],
       )
     : [];
   const warehouses = s
     ? await tenantRows<Warehouse>(
         s.companyId,
-        `SELECT id,name FROM warehouses WHERE company_id=$1 AND active=true ORDER BY name`,
-        [s.companyId],
+        `SELECT w.id,w.name FROM warehouses w WHERE w.company_id=$1 AND w.active=true AND ($2='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments ua WHERE ua.company_id=w.company_id AND ua.user_id=$3 AND ua.warehouse_id=w.id)) ORDER BY w.name`,
+        [s.companyId,s.role,s.userId],
       )
     : [];
   const locations = s
     ? await tenantRows<Location>(
         s.companyId,
-        `SELECT id,code FROM locations WHERE company_id=$1 AND active=true AND type IN('storage','picking','packing','shipping') ORDER BY code`,
-        [s.companyId],
+        `SELECT l.id,l.code FROM locations l WHERE l.company_id=$1 AND l.active=true AND l.type IN('storage','picking','packing','shipping') AND ($2='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments ua WHERE ua.company_id=l.company_id AND ua.user_id=$3 AND ua.warehouse_id=l.warehouse_id)) ORDER BY l.code`,
+        [s.companyId,s.role,s.userId],
       )
     : [];
-  const schedules=s?await tenantRows<Schedule>(s.companyId,`SELECT s.id,s.name,w.name warehouse,l.code location,s.abc_classes,s.frequency_days::text,s.variance_threshold::text,s.next_run_at::text,s.active FROM cycle_count_schedules s JOIN warehouses w ON w.id=s.warehouse_id LEFT JOIN locations l ON l.id=s.location_id WHERE s.company_id=$1 ORDER BY s.active DESC,s.next_run_at`,[s.companyId]):[];
+  const schedules=s?await tenantRows<Schedule>(s.companyId,`SELECT s.id,s.name,w.name warehouse,l.code location,s.abc_classes,s.frequency_days::text,s.variance_threshold::text,s.next_run_at::text,s.active FROM cycle_count_schedules s JOIN warehouses w ON w.id=s.warehouse_id LEFT JOIN locations l ON l.id=s.location_id WHERE s.company_id=$1 AND ($2='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments ua WHERE ua.company_id=s.company_id AND ua.user_id=$3 AND ua.warehouse_id=s.warehouse_id)) ORDER BY s.active DESC,s.next_run_at`,[s.companyId,s.role,s.userId]):[];
   const q=await searchParams;
   return (
     <div className="app-content">

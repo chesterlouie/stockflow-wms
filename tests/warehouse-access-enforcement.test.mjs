@@ -78,3 +78,13 @@ test('outbound queues list only records in assigned warehouses',async()=>{
     assert.match(source,/s\.userId/,`${path} must bind the signed-in user`);
   }
 });
+
+test('inventory and count screens are restricted to assigned warehouses',async()=>{
+  const pages=['app/app/inventory/page.tsx','app/app/inventory/adjust/page.tsx','app/app/inventory/transfer/page.tsx','app/app/counts/page.tsx','app/app/counts/[id]/page.tsx'];
+  for(const path of pages)assert.match(await read(path),/user_warehouse_assignments/,`${path} must scope warehouse records`);
+});
+
+test('inventory status and every warehouse-scoped count action enforce assignment',async()=>{
+  const routes=['app/api/inventory/status/route.ts','app/api/counts/route.ts','app/api/counts/[id]/approve/route.ts','app/api/counts/[id]/recount/route.ts','app/api/counts/lines/[id]/submit/route.ts','app/api/counts/schedules/route.ts','app/api/counts/schedules/[id]/generate/route.ts'];
+  for(const path of routes)assert.match(await read(path),/assertWarehouseAccess/,`${path} must reject direct access outside the assignment`);
+});

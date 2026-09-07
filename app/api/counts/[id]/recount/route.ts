@@ -1,5 +1,6 @@
 import { getSession } from "../../../../../lib/auth";
 import { withTenant } from "../../../../../lib/db";
+import { assertWarehouseAccess } from "../../../../../lib/warehouse-access";
 export async function POST(
   r: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -18,6 +19,7 @@ export async function POST(
         )
       ).rows[0];
       if (!old) throw new Error();
+      await assertWarehouseAccess(c,s,old.warehouse_id);
       const count = (
         await c.query(
           `INSERT INTO inventory_counts(company_id,warehouse_id,count_no,count_type,location_id,blind_count,created_by,schedule_id,parent_count_id,recount_number) VALUES($1,$2,$3,'cycle',$4,true,$5,$6,$7,$8) RETURNING id`,
