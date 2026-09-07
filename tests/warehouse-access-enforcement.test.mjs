@@ -59,3 +59,22 @@ test('direct outbound order and label URLs hide inaccessible warehouse records',
     assert.match(source,/notFound/);
   }
 });
+
+test('outbound queues list only records in assigned warehouses',async()=>{
+  const pages=[
+    'app/app/orders/page.tsx',
+    'app/app/fulfillment/mobile/page.tsx',
+    'app/app/packing/cartons/page.tsx',
+    'app/app/dispatch/mobile/page.tsx',
+    'app/app/waves/page.tsx',
+    'app/app/exceptions/page.tsx',
+    'app/app/dispatch-reversals/page.tsx',
+    'app/app/manifests/page.tsx'
+  ];
+  for(const path of pages){
+    const source=await read(path);
+    assert.match(source,/user_warehouse_assignments/,`${path} must filter by warehouse assignment`);
+    assert.match(source,/s\.role/,`${path} must preserve the owner all-warehouse override`);
+    assert.match(source,/s\.userId/,`${path} must bind the signed-in user`);
+  }
+});
