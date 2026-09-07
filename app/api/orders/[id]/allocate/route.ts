@@ -1,6 +1,7 @@
 import { getSession } from "../../../../../lib/auth";
 import { withTenant } from "../../../../../lib/db";
 import { requestSubstitutionApproval } from "../../../../../lib/approvals";
+import { assertWarehouseAccess } from "../../../../../lib/warehouse-access";
 
 type Demand={itemId:string;quantity:number;method:string;kit:boolean};
 
@@ -12,6 +13,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     await withTenant(s.companyId,async c=>{
       const order=(await c.query(`SELECT * FROM sales_orders WHERE company_id=$1 AND id=$2 AND status='new' FOR UPDATE`,[s.companyId,id])).rows[0];
       if(!order)throw new Error('INVALID_ORDER');
+      await assertWarehouseAccess(c,s,order.warehouse_id);
       const packing=(await c.query(`SELECT id FROM locations WHERE company_id=$1 AND warehouse_id=$2 AND type='packing' AND active=true ORDER BY code LIMIT 1`,[s.companyId,order.warehouse_id])).rows[0];
       if(!packing)throw new Error('NO_PACKING');
       const lines=(await c.query(`SELECT l.*,i.item_type,i.allocation_method,i.base_uom FROM sales_order_lines l JOIN items i ON i.company_id=l.company_id AND i.id=l.item_id WHERE l.company_id=$1 AND l.order_id=$2`,[s.companyId,id])).rows;
