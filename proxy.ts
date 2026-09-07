@@ -74,7 +74,7 @@ export async function proxy(request:NextRequest){
   }
   const mutation=!['GET','HEAD','OPTIONS'].includes(request.method);
   const publicAccountMutation=pathname.startsWith('/api/auth/')||/^\/api\/invitations\/[^/]+\/accept$/.test(pathname);
-  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read'||pathname.startsWith('/api/support/');
+  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read'||pathname.startsWith('/api/support/')||pathname==='/api/store-requests'||pathname.startsWith('/api/store-deliveries/')||pathname==='/api/store-transactions';
   const managerRestrictedMutation=['/api/billing','/api/integrations','/api/users','/api/invitations','/api/warehouses','/api/admin'].some(path=>pathname===path||pathname.startsWith(`${path}/`));
   const deniedMutation=!publicAccountMutation&&(role==='viewer'&&!viewerPersonalMutation||role==='operator'&&!isOperatorMutation(pathname)||role==='manager'&&managerRestrictedMutation);
   if(pathname.startsWith('/api/')&&mutation&&deniedMutation){
