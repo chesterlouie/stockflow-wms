@@ -1,2 +1,19 @@
-import { getSession } from "../../../lib/auth";import { withTenant } from "../../../lib/db";import { inboundReceiptSchema } from "../../../lib/validation";
-export async function POST(request:Request){const s=await getSession();if(!s)return Response.redirect(new URL('/signin',request.url),303);const p=inboundReceiptSchema.safeParse(Object.fromEntries(await request.formData()));if(!p.success)return Response.redirect(new URL('/app/receiving?error=invalid',request.url),303);try{const id=await withTenant(s.companyId,async c=>{const valid=await c.query(`SELECT 1 FROM warehouses w JOIN items i ON i.company_id=w.company_id WHERE w.company_id=$1 AND w.id=$2 AND i.id=$3`,[s.companyId,p.data.warehouseId,p.data.itemId]);if(!valid.rowCount)throw new Error();const receipt=(await c.query(`INSERT INTO inbound_receipts(company_id,warehouse_id,receipt_no,supplier,external_reference,expected_date,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`,[s.companyId,p.data.warehouseId,p.data.receiptNo,p.data.supplier,p.data.externalReference||null,p.data.expectedDate||null,s.userId])).rows[0];await c.query(`INSERT INTO inbound_receipt_lines(company_id,receipt_id,item_id,expected_quantity,uom) VALUES($1,$2,$3,$4,$5)`,[s.companyId,receipt.id,p.data.itemId,p.data.expectedQuantity,p.data.uom]);return receipt.id});return Response.redirect(new URL(`/app/receiving/${id}`,request.url),303)}catch{return Response.redirect(new URL('/app/receiving?error=duplicate',request.url),303)}}
+import {getSession} from '../../../lib/auth';
+import {withTenant} from '../../../lib/db';
+import {inboundReceiptSchema} from '../../../lib/validation';
+import {assertWarehouseAccess} from '../../../lib/warehouse-access';
+export async function POST(request:Request){
+  const s=await getSession();if(!s)return Response.redirect(new URL('/signin',request.url),303);
+  if(!['owner','admin','manager','operator'].includes(s.role))return new Response('Forbidden',{status:403});
+  const p=inboundReceiptSchema.safeParse(Object.fromEntries(await request.formData()));
+  if(!p.success)return Response.redirect(new URL('/app/receiving?error=invalid',request.url),303);
+  try{
+    const id=await withTenant(s.companyId,async c=>{
+      await assertWarehouseAccess(c,s,p.data.warehouseId);
+      const valid=await c.query(`SELECT 1 FROM warehouses w JOIN items i ON i.company_id=w.company_id WHERE w.company_id=$1 AND w.id=$2 AND i.id=$3`,[s.companyId,p.data.warehouseId,p.data.itemId]);if(!valid.rowCount)throw new Error();
+      const receipt=(await c.query(`INSERT INTO inbound_receipts(company_id,warehouse_id,receipt_no,supplier,external_reference,expected_date,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`,[s.companyId,p.data.warehouseId,p.data.receiptNo,p.data.supplier,p.data.externalReference||null,p.data.expectedDate||null,s.userId])).rows[0];
+      await c.query(`INSERT INTO inbound_receipt_lines(company_id,receipt_id,item_id,expected_quantity,uom) VALUES($1,$2,$3,$4,$5)`,[s.companyId,receipt.id,p.data.itemId,p.data.expectedQuantity,p.data.uom]);return receipt.id;
+    });
+    return Response.redirect(new URL(`/app/receiving/${id}`,request.url),303);
+  }catch(e){const code=e instanceof Error&&e.message==='WAREHOUSE_ACCESS'?'access':'duplicate';return Response.redirect(new URL(`/app/receiving?error=${code}`,request.url),303)}
+}
