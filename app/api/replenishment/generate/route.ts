@@ -13,7 +13,8 @@ export async function POST(request: Request) {
       WHERE r.company_id=$1 AND l.type='picking' AND COALESCE((SELECT sum(quantity) FROM inventory_ledger x
       WHERE x.company_id=r.company_id AND x.item_id=r.item_id AND x.location_id=r.location_id),0)<r.min_quantity
       AND NOT EXISTS(SELECT 1 FROM replenishment_tasks t WHERE t.company_id=r.company_id
-      AND t.item_id=r.item_id AND t.to_location_id=r.location_id AND t.status='pending')`, [session.companyId])).rows;
+      AND t.item_id=r.item_id AND t.to_location_id=r.location_id AND t.status='pending')
+      AND ($2='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments ua WHERE ua.company_id=r.company_id AND ua.user_id=$3 AND ua.warehouse_id=l.warehouse_id))`, [session.companyId,session.role,session.userId])).rows;
     let count = 0;
     for (const need of needs) {
       const order = need.allocation_method === 'fefo' ? 'x.expiry_date ASC NULLS LAST,oldest_stock ASC'

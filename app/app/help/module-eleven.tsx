@@ -6,6 +6,7 @@ export default function ModuleEleven(){return <section className="panel" id="mod
   <p>Replenishment moves stock already owned by the company from a reserve <strong>Storage</strong> location to a forward <strong>Picking</strong> location. It does not receive new stock, purchase from a supplier, or change company-total on hand.</p>
   <pre className="knowledge-tree">Storage reserve → Replenishment task → Scan and move → Picking location</pre>
   <div className="knowledge-note"><strong>Operational purpose:</strong> Picking bins should contain enough accessible stock for fulfillment, while reserve stock remains organized in Storage.</div>
+  <div className="knowledge-note"><strong>Warehouse access:</strong> Rules, locations, generated tasks, forecasts, and recommendation decisions are limited to approved warehouses. Owners retain all-warehouse visibility. Missing work should be checked against the user’s access profile before creating a duplicate rule or task.</div>
   <h3>Planning terms</h3>
   <table className="data-table"><thead><tr><th>Term</th><th>Meaning in Warevanta</th></tr></thead><tbody>{terms.map(x=><tr key={x[0]}><td><strong>{x[0]}</strong></td><td>{x[1]}</td></tr>)}</tbody></table>
   <h3>Method 1: Minimum-and-target replenishment</h3>

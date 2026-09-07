@@ -88,3 +88,11 @@ test('inventory status and every warehouse-scoped count action enforce assignmen
   const routes=['app/api/inventory/status/route.ts','app/api/counts/route.ts','app/api/counts/[id]/approve/route.ts','app/api/counts/[id]/recount/route.ts','app/api/counts/lines/[id]/submit/route.ts','app/api/counts/schedules/route.ts','app/api/counts/schedules/[id]/generate/route.ts'];
   for(const path of routes)assert.match(await read(path),/assertWarehouseAccess/,`${path} must reject direct access outside the assignment`);
 });
+
+test('replenishment, forecasting, returns, and traceability respect warehouse assignments',async()=>{
+  const pages=['app/app/replenishment/page.tsx','app/app/forecasting/page.tsx','app/app/returns/page.tsx','app/app/traceability/page.tsx'];
+  for(const path of pages)assert.match(await read(path),/user_warehouse_assignments/,`${path} must scope visible records`);
+  const guarded=['app/api/replenishment/[id]/complete/route.ts','app/api/replenishment/rules/route.ts','app/api/forecasting/[id]/decision/route.ts','app/api/forecasting/rules/route.ts','app/api/returns/route.ts','app/api/returns/[id]/disposition/route.ts','app/api/returns/[id]/reverse/route.ts'];
+  for(const path of guarded)assert.match(await read(path),/assert(?:Warehouse|Location)Access/,`${path} must guard direct warehouse actions`);
+  assert.match(await read('app/api/replenishment/generate/route.ts'),/user_warehouse_assignments/);
+});
