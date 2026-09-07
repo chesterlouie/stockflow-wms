@@ -19,8 +19,9 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     JOIN items item ON item.id=line.item_id AND item.company_id=line.company_id
     LEFT JOIN item_barcodes barcode ON barcode.item_id=line.item_id AND barcode.company_id=line.company_id
     WHERE line.company_id=$1 AND line.id=$2 AND receipt.id=$3
+      AND ($4='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments assignment WHERE assignment.company_id=receipt.company_id AND assignment.user_id=$5 AND assignment.warehouse_id=receipt.warehouse_id))
     GROUP BY item.id,item.sku
-  `,[session.companyId,lineId,id])).rows[0]);
+  `,[session.companyId,lineId,id,session.role,session.userId])).rows[0]);
   const valid=Boolean(expected&&matchesItemIdentifier(scannedValue,expected.sku,expected.barcodes));
   if(!valid)return Response.redirect(new URL(`/app/receiving/mobile/${id}?error=barcode`,request.url),303);
   const result=await inspectReceipt(new Request(request.url,{method:'POST',body:form}),{params:Promise.resolve({id})});

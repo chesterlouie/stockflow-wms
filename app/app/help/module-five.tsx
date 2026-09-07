@@ -4,6 +4,9 @@ export default function ModuleFive(){return <section className="panel" id="modul
   <div className="panel-heading"><div><p className="eyebrow">Module 5</p><h2>Receiving, Inspection, and Putaway</h2><p>Goal: verify what arrived, classify its condition, record traceability, and move accepted stock into storage.</p></div><span className="badge">Current lesson</span></div>
   <h3>The inbound flow</h3>
   <pre className="knowledge-tree">Expected receipt → Receiving-label scan → Item-barcode scan{`\n`}→ Inspection → Accepted / Hold / Damaged → Putaway → Available storage</pre>
+  <h3>Warehouse access prerequisite</h3>
+  <p>Before receiving work is assigned, an Owner or Administrator opens <strong>Administration → Users &amp; access → Manage access scopes</strong> and approves the receiver’s warehouse. Receiving queues, mobile searches, receipt pages, receiving labels, inspection posting, and putaway queues show only assigned warehouses.</p>
+  <div className="knowledge-note"><strong>Direct-link protection:</strong> copying a receipt, label, or putaway URL from another warehouse does not bypass access. Warevanta validates the warehouse again before displaying or posting the task. All Receiving, Storage, Hold, and Damaged locations selected during inspection must belong to that receipt’s warehouse.</div>
   <h3>Open the expected receipt</h3>
   <p>Open <strong>Inbound → Receiving</strong> and select <code>TRAIN-PO-001-01</code>. Review expected, received, remaining, tracking, tolerance, and status.</p>
   <h3>Receiving labels: purpose, timing, and ownership</h3>

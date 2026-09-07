@@ -5,17 +5,17 @@ import {tenantRows} from '../../../../../lib/db';
 
 export const dynamic='force-dynamic';
 
-type Receipt={id:string;receipt_no:string;line_id:string;sku:string;description:string;tracking_method:string;expected_quantity:string;received:string;remaining:string;uom:string};
+type Receipt={id:string;receipt_no:string;line_id:string;warehouse_id:string;sku:string;description:string;tracking_method:string;expected_quantity:string;received:string;remaining:string;uom:string};
 type Location={id:string;code:string;type:string};
 
 export default async function MobileTask({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{error?:string}>}) {
   const s=await getSession();
   const {id}=await params;
   const q=await searchParams;
-  const r=(s?await tenantRows<Receipt>(s.companyId,`SELECT r.id,r.receipt_no,rl.id AS line_id,i.sku,i.description,i.tracking_method,rl.expected_quantity::text,(rl.accepted_quantity+rl.held_quantity+rl.damaged_quantity)::text AS received,(rl.expected_quantity-rl.accepted_quantity-rl.held_quantity-rl.damaged_quantity)::text AS remaining,rl.uom FROM inbound_receipts r JOIN inbound_receipt_lines rl ON rl.receipt_id=r.id JOIN items i ON i.id=rl.item_id WHERE r.company_id=$1 AND r.id=$2 AND r.status IN('expected','partial')`,[s.companyId,id]):[])[0];
+  const r=(s?await tenantRows<Receipt>(s.companyId,`SELECT r.id,r.receipt_no,r.warehouse_id,rl.id AS line_id,i.sku,i.description,i.tracking_method,rl.expected_quantity::text,(rl.accepted_quantity+rl.held_quantity+rl.damaged_quantity)::text AS received,(rl.expected_quantity-rl.accepted_quantity-rl.held_quantity-rl.damaged_quantity)::text AS remaining,rl.uom FROM inbound_receipts r JOIN inbound_receipt_lines rl ON rl.receipt_id=r.id JOIN items i ON i.id=rl.item_id WHERE r.company_id=$1 AND r.id=$2 AND r.status IN('expected','partial') AND ($3='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments a WHERE a.company_id=r.company_id AND a.user_id=$4 AND a.warehouse_id=r.warehouse_id))`,[s.companyId,id,s.role,s.userId]):[])[0];
   if(!r)notFound();
-  const locations=await tenantRows<Location>(s!.companyId,'SELECT id,code,type FROM locations WHERE company_id=$1 AND active=true ORDER BY code',[s!.companyId]);
-  const error=q.error==='barcode'?'The scanned value does not match this item. Scan a registered EA/CASE barcode or enter the exact SKU.':q.error==='over'?'The quantity exceeds the remaining quantity and allowed over-receipt tolerance.':q.error==='lot'?'Enter the lot number printed on the received stock.':q.error==='expiry'?'Enter the expiry date printed on the received stock.':q.error==='shelf_life'?'The expiry date is below the item’s minimum shelf-life rule.':q.error==='location'?'Required Receiving, Storage, Hold, or Damaged locations are missing or invalid.':q.error==='state'?'This receipt is no longer open or does not belong to this company workspace.':q.error?'The receipt details are incomplete or invalid. Review the receiving information.':null;
+  const locations=await tenantRows<Location>(s!.companyId,'SELECT id,code,type FROM locations WHERE company_id=$1 AND warehouse_id=$2 AND active=true ORDER BY code',[s!.companyId,r.warehouse_id]);
+  const error=q.error==='warehouse_access'?'You are not assigned to this warehouse. Ask an Owner or Administrator to update Users and access.':q.error==='barcode'?'The scanned value does not match this item. Scan a registered EA/CASE barcode or enter the exact SKU.':q.error==='over'?'The quantity exceeds the remaining quantity and allowed over-receipt tolerance.':q.error==='lot'?'Enter the lot number printed on the received stock.':q.error==='expiry'?'Enter the expiry date printed on the received stock.':q.error==='shelf_life'?'The expiry date is below the item’s minimum shelf-life rule.':q.error==='location'?'Required Receiving, Storage, Hold, or Damaged locations are missing or invalid.':q.error==='state'?'This receipt is no longer open or is outside your assigned warehouse access.':q.error?'The receipt details are incomplete or invalid. Review the receiving information.':null;
 
   return <div className="app-content">
     <div className="page-heading"><div><h1>{r.receipt_no}</h1><p>{r.sku} — {r.description}</p></div><Link href="/app/receiving/mobile" className="button button-secondary">Back to queue</Link></div>

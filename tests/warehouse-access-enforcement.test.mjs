@@ -24,3 +24,15 @@ test('dashboard uses the real active warehouse column',async()=>{
   assert.match(source,/w\.active=true/);
   assert.doesNotMatch(source,/w\.is_active/);
 });
+
+test('receiving and putaway queues hide other warehouses and mutation routes guard direct ids',async()=>{
+  const filteredPages=['app/app/receiving/page.tsx','app/app/receiving/mobile/page.tsx','app/app/receiving/mobile/[id]/page.tsx','app/app/putaway/mobile/page.tsx','app/app/receiving/[id]/label/page.tsx'];
+  for(const path of filteredPages)assert.match(await read(path),/user_warehouse_assignments/,`${path} must filter warehouse visibility`);
+  const guardedRoutes=['app/api/receiving/[id]/inspect/route.ts','app/api/receiving/[id]/mobile-inspect/route.ts','app/api/putaway/[id]/complete/route.ts','app/api/putaway/[id]/mobile-confirm/route.ts'];
+  for(const path of guardedRoutes)assert.match(await read(path),/(assertWarehouseAccess|user_warehouse_assignments)/,`${path} must guard direct task ids`);
+});
+
+test('receipt inspection locations are limited to the receipt warehouse',async()=>{
+  const source=await read('app/api/receiving/[id]/inspect/route.ts');
+  assert.match(source,/warehouse_id=\$2 AND id=ANY\(\$3::uuid\[\]\)/);
+});
