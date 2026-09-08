@@ -68,6 +68,7 @@ const migrations = [
   ["057_nonblocking_store_notifications", new URL("../database/migrations/057_nonblocking_store_notifications.sql", import.meta.url)],
   ["058_store_fulfilling_warehouse", new URL("../database/migrations/058_store_fulfilling_warehouse.sql", import.meta.url)],
   ["059_warehouse_store_request_review", new URL("../database/migrations/059_warehouse_store_request_review.sql", import.meta.url)],
+  ["060_store_transaction_scan_evidence", new URL("../database/migrations/060_store_transaction_scan_evidence.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);

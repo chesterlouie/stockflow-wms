@@ -95,9 +95,50 @@ export default function MobileRuntime() {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
     const enhance = () => {
+      const scanLabel = (name: string, title: string, placeholder: string) => {
+        const label = document.createElement("label");
+        label.textContent = title;
+        const input = document.createElement("input");
+        input.name = name;
+        input.required = true;
+        input.placeholder = placeholder;
+        input.dataset.scanField = "true";
+        label.append(input);
+        return label;
+      };
+      document
+        .querySelectorAll<HTMLFormElement>('form[action*="/api/store-deliveries/"]')
+        .forEach((form) => {
+          if (form.dataset.enforcedScans) return;
+          form.dataset.enforcedScans = "true";
+          const scanRow = document.createElement("div");
+          scanRow.className = "form-row store-enforced-scans";
+          scanRow.append(
+            scanLabel("shipmentBarcode", "Delivery label", "Scan shipment, order, or tracking label"),
+            scanLabel("locationCode", "Receiving locator", "Scan receiving or backroom locator"),
+          );
+          form.querySelector("p")?.insertAdjacentElement("afterend", scanRow);
+          form.querySelectorAll<HTMLInputElement>('input[name^="accepted_"]').forEach((quantity) => {
+            const lineId = quantity.name.slice("accepted_".length);
+            const panel = quantity.closest<HTMLElement>(".panel");
+            if (!panel || panel.querySelector(`[name="barcode_${lineId}"]`)) return;
+            const label = scanLabel(`barcode_${lineId}`, "Confirm item barcode or SKU", "Scan the item label");
+            panel.querySelector("p")?.insertAdjacentElement("afterend", label);
+          });
+        });
+      document
+        .querySelectorAll<HTMLFormElement>('form[action$="/api/store-transactions"]')
+        .forEach((form) => {
+          if (form.dataset.enforcedScans) return;
+          form.dataset.enforcedScans = "true";
+          const transaction = form.querySelector('select[name="transactionType"]')?.closest("label");
+          transaction?.insertAdjacentElement("afterend", scanLabel("locationCode", "Source locator", "Scan the active store locator"));
+          const item = form.querySelector('select[name="itemId"]')?.closest("label");
+          item?.insertAdjacentElement("afterend", scanLabel("barcode", "Confirm item barcode or SKU", "Scan the selected item"));
+        });
       document
         .querySelectorAll<HTMLInputElement>(
-          'input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"],input[name="destinationCode"],input[name="scan"],input[name="trackingNumber"]',
+          'input[data-scan-field="true"],input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"],input[name="destinationCode"],input[name="scan"],input[name="trackingNumber"]',
         )
         .forEach((input) => {
           if (input.dataset.mobileScan) return;
