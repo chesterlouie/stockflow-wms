@@ -36,4 +36,10 @@ await run(["run", "config:validate"]);
 await run(["run", "db:migrate"]);
 await run(["run", "db:configure-platform-admin"]);
 await run(["run", "db:configure-role"]);
-await run(["run", "start", "--", "--hostname", "0.0.0.0", "--port", process.env.PORT || "3000"]);
+const worker = spawn(process.execPath, ["scripts/report-worker.mjs"], { env: process.env, stdio: "inherit" });
+worker.on("error", (error) => console.error("Background worker failed to start", error));
+try {
+  await run(["run", "start", "--", "--hostname", "0.0.0.0", "--port", process.env.PORT || "3000"]);
+} finally {
+  worker.kill("SIGTERM");
+}

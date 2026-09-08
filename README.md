@@ -1,5 +1,7 @@
 # Warevanta WMS
 
+The maintained system-wide functional, technical, QA, deployment, and support reference is [docs/WAREVANTA-TECHNICAL-HANDBOOK.html](docs/WAREVANTA-TECHNICAL-HANDBOOK.html). Update it in the same release as every feature and knowledge-base change.
+
 ## Local service command
 
 From the Warevanta project folder on Windows:

@@ -21,9 +21,10 @@ if (!deliveryEnabled) {
   await createAlerts();
   await processApprovals();
   await processCountSchedules();
+  await processVkitBackorders();
   const safeTimer = setInterval(
     () =>
-      Promise.all([createAlerts(), processApprovals(),processCountSchedules()]).catch(console.error),
+      Promise.all([createAlerts(), processApprovals(),processCountSchedules(),processVkitBackorders()]).catch(console.error),
     60000,
   );
   const safeStop = async () => {
@@ -96,6 +97,7 @@ async function cycle() {
     await notifyAlerts();
     await processApprovals();
     await processCountSchedules();
+    await processVkitBackorders();
   } finally {
     await client.query(`SELECT pg_advisory_unlock(9042026)`);
   }
@@ -210,6 +212,7 @@ async function processApprovals() {
   }
 }
 async function processCountSchedules(){if(!(await client.query(`SELECT pg_try_advisory_lock(9042035) ok`)).rows[0].ok)return;try{const due=(await client.query(`SELECT * FROM cycle_count_schedules WHERE active=true AND next_run_at<=now() ORDER BY next_run_at LIMIT 25 FOR UPDATE SKIP LOCKED`)).rows;for(const schedule of due){try{const id=await generateScheduledCount(client,schedule,null);if(id)await client.query(`INSERT INTO audit_logs(company_id,action,entity_type,entity_id,details) VALUES($1,'scheduled_count_generated','inventory_count',$2,$3::jsonb)`,[schedule.company_id,id,JSON.stringify({scheduleId:schedule.id})]);else await client.query(`UPDATE cycle_count_schedules SET last_run_at=now(),next_run_at=next_run_at+(frequency_days||' days')::interval WHERE id=$1`,[schedule.id])}catch(e){console.error('Scheduled count generation failed',e)}}}finally{await client.query(`SELECT pg_advisory_unlock(9042035)`)}}
+async function processVkitBackorders(){if(!(await client.query(`SELECT pg_try_advisory_lock(9042069) ok`)).rows[0].ok)return;try{const rows=(await client.query(`SELECT s.*,o.created_by FROM vkit_backorder_summary s JOIN sales_orders o ON o.company_id=s.company_id AND o.id=s.id WHERE o.status='new' AND o.backorder_status IN('waiting','ready') AND s.attention_status IN('due_soon','overdue','critical')`)).rows;for(const x of rows){const message=`${x.order_no} is ${x.attention_status.replaceAll('_',' ')} (required ${x.requested_ship_date||'date not set'}).`;const event=(await client.query(`INSERT INTO vkit_backorder_escalations(company_id,order_id,severity,event_key,message) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING RETURNING id`,[x.company_id,x.id,x.attention_status,`backorder:${x.id}:${x.attention_status}`,message])).rows[0];if(!event)continue;await client.query(`INSERT INTO warehouse_notifications(company_id,warehouse_id,user_id,event_key,title,message,order_id) SELECT $1,$2,m.user_id,$3,'VKIT backorder attention required',$4,$5 FROM company_members m WHERE m.company_id=$1 AND m.role IN('owner','admin','manager') AND (m.role='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments a WHERE a.company_id=$1 AND a.user_id=m.user_id AND a.warehouse_id=$2)) ON CONFLICT DO NOTHING`,[x.company_id,x.warehouse_id,`backorder:${x.id}:${x.attention_status}`,message,x.id]);if(x.store_id)await client.query(`INSERT INTO store_notifications(company_id,user_id,store_id,event_key,notification_type,title,message,entity_type,entity_id) SELECT $1,u.user_id,$2,$3,'approval_requested','VKIT backorder attention required',$4,'sales_order',$5 FROM (SELECT $6::uuid user_id UNION SELECT a.user_id FROM store_user_assignments a WHERE a.company_id=$1 AND a.store_id=$2 AND a.store_role='store_manager')u ON CONFLICT DO NOTHING`,[x.company_id,x.store_id,`backorder:${x.id}:${x.attention_status}`,message,x.id,x.created_by])}}finally{await client.query(`SELECT pg_advisory_unlock(9042069)`)}}
 let stopping = false;
 const stop = async () => {
   if (stopping) return;
