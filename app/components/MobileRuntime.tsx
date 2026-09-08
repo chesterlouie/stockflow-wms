@@ -100,6 +100,8 @@ export default function MobileRuntime() {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
     const enhance = () => {
+      document.querySelectorAll<HTMLFormElement>('form[action$="/allocate"]').forEach(form=>{if(form.querySelector('[name="allowPartial"]'))return;const label=document.createElement('label');const input=document.createElement('input');input.type='checkbox';input.name='allowPartial';input.value='1';label.append(input,document.createTextNode(' Release complete VKIT quantity and backorder the balance'));form.prepend(label)});
+      document.querySelectorAll<HTMLFormElement>('form[action*="/api/stores/requests/"][action$="/decision"]').forEach(form=>{if(form.querySelector('[name="allowPartial"]'))return;const label=document.createElement('label');const input=document.createElement('input');input.type='checkbox';input.name='allowPartial';input.value='1';label.append(input,document.createTextNode(' Allow complete-kit partial release if stock changes'));form.prepend(label)});
       if(location.pathname==='/app/returns'){
         const heading=document.querySelector<HTMLElement>('.page-heading');
         if(heading&&!heading.querySelector('[data-store-vkit-returns]')){const link=document.createElement('a');link.dataset.storeVkitReturns='true';link.className='button button-secondary';link.href='/app/returns/store-vkits';link.textContent='Store VKIT returns';heading.append(link)}

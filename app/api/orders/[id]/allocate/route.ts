@@ -2,11 +2,13 @@ import { getSession } from "../../../../../lib/auth";
 import { withTenant } from "../../../../../lib/db";
 import { requestSubstitutionApproval } from "../../../../../lib/approvals";
 import { assertWarehouseAccess } from "../../../../../lib/warehouse-access";
+import {splitVkitBackorder} from "../../../../../lib/vkit-backorders";
 
 type Demand={itemId:string;quantity:number;method:string;kit:boolean};
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   const s=await getSession();if(!s)return Response.redirect(new URL('/signin',request.url),303);
+  const form=await request.formData(),allowPartial=form.get('allowPartial')==='1';
   const {id}=await params;
   let approvalId='';
   try{
@@ -18,6 +20,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       if(!packing)throw new Error('NO_PACKING');
       const lines=(await c.query(`SELECT l.*,i.item_type,i.allocation_method,i.base_uom FROM sales_order_lines l JOIN items i ON i.company_id=l.company_id AND i.id=l.item_id WHERE l.company_id=$1 AND l.order_id=$2`,[s.companyId,id])).rows;
       for(const line of lines){
+        if(line.item_type==='virtual_kit'&&allowPartial){const split=await splitVkitBackorder(c,{companyId:s.companyId,order,line,userId:s.userId});line.ordered_quantity=split.releaseQuantity}
         let demands:Demand[]=[{itemId:line.item_id,quantity:Number(line.ordered_quantity),method:line.allocation_method,kit:false}];
         if(line.item_type==='virtual_kit'){
           const components=(await c.query(`SELECT x.component_item_id,x.quantity,i.allocation_method FROM item_kit_components x JOIN items i ON i.company_id=x.company_id AND i.id=x.component_item_id WHERE x.company_id=$1 AND x.kit_item_id=$2 AND x.active AND NOT x.optional ORDER BY i.sku`,[s.companyId,line.item_id])).rows;
