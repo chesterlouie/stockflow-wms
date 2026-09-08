@@ -16,6 +16,7 @@ type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
 };
+type StoreRequestOption={item_id:string;sku:string;description:string;base_uom:string;uom:string;factor:string;barcodes:string[]};
 
 const hints = new Map<DecodeHintType, unknown>([
   [
@@ -146,40 +147,29 @@ export default function MobileRuntime() {
           const dateLabel = form.querySelector<HTMLInputElement>('input[name="requestedShipDate"]')?.closest("label");
           const submit = form.querySelector<HTMLButtonElement>('button[type="submit"],button:not([type])');
           if (!itemLabel || !quantityLabel || !dateLabel || !submit) return;
+          const note=form.querySelector<HTMLElement>(".form-note");if(note)note.textContent="Add one or more items, choose a registered request unit, and enter quantity in that unit. Warevanta normalizes each line to its base unit.";
+          submit.disabled = true;
           const itemTemplate = itemLabel.cloneNode(true) as HTMLLabelElement;
           const quantityTemplate = quantityLabel.cloneNode(true) as HTMLLabelElement;
-          const lines = document.createElement("div");
-          lines.className = "store-request-lines";
-          const createLine = (item: HTMLLabelElement, quantity: HTMLLabelElement, removable: boolean) => {
-            const row = document.createElement("div");
-            row.className = "form-row store-request-line";
-            row.append(item, quantity);
-            if (removable) {
-              const remove = document.createElement("button");
-              remove.type = "button";
-              remove.className = "button button-secondary";
-              remove.textContent = "Remove";
-              remove.setAttribute("aria-label", "Remove stock request line");
-              remove.onclick = () => row.remove();
-              row.append(remove);
-            }
-            return row;
-          };
-          lines.append(createLine(itemLabel, quantityLabel, false));
-          dateLabel.parentElement?.insertAdjacentElement("beforebegin", lines);
-          const add = document.createElement("button");
-          add.type = "button";
-          add.className = "button button-secondary";
-          add.textContent = "+ Add another item";
-          add.onclick = () => {
-            if (lines.children.length >= 50) return;
-            const item = itemTemplate.cloneNode(true) as HTMLLabelElement;
-            const quantity = quantityTemplate.cloneNode(true) as HTMLLabelElement;
-            const input = quantity.querySelector<HTMLInputElement>('input[name="quantity"]');
-            if (input) input.value = "";
-            lines.append(createLine(item, quantity, true));
-          };
-          submit.insertAdjacentElement("beforebegin", add);
+          void fetch("/api/store-request-options",{cache:"no-store"}).then(async response=>{
+            if(!response.ok)throw new Error("options");
+            const options=(await response.json() as {options:StoreRequestOption[]}).options;
+            const lines = document.createElement("div");
+            lines.className = "store-request-lines";
+            const createLine = (item: HTMLLabelElement, quantity: HTMLLabelElement, removable: boolean) => {
+              const row = document.createElement("div");
+              row.className = "form-row store-request-line";
+              const itemSelect=item.querySelector<HTMLSelectElement>('select[name="itemId"]')!;
+              const uomLabel=document.createElement("label"),uomSelect=document.createElement("select"),hint=document.createElement("small");
+              uomLabel.textContent="Request unit";uomSelect.name="requestUom";uomSelect.required=true;uomLabel.append(uomSelect,hint);
+              const updateHint=()=>{const selected=options.find(option=>option.item_id===itemSelect.value&&option.uom===uomSelect.value);hint.textContent=selected?`1 ${selected.uom} = ${selected.factor} ${selected.base_uom}${selected.barcodes.length?` · Barcode ${selected.barcodes.join(', ')}`:''}`:"No active unit conversion"},refreshUoms=()=>{const choices=options.filter(option=>option.item_id===itemSelect.value);uomSelect.replaceChildren(...choices.map(option=>{const entry=document.createElement("option");entry.value=option.uom;entry.textContent=`${option.uom} — ${option.factor} ${option.base_uom}${option.barcodes.length?` · ${option.barcodes.join(', ')}`:' · no barcode'}`;return entry}));updateHint()};
+              itemSelect.onchange=refreshUoms;uomSelect.onchange=updateHint;refreshUoms();row.append(item, uomLabel, quantity);
+              if (removable) {const remove = document.createElement("button");remove.type = "button";remove.className = "button button-secondary";remove.textContent = "Remove";remove.setAttribute("aria-label", "Remove stock request line");remove.onclick = () => row.remove();row.append(remove)}
+              return row;
+            };
+            lines.append(createLine(itemLabel, quantityLabel, false));dateLabel.parentElement?.insertAdjacentElement("beforebegin", lines);
+            const add = document.createElement("button");add.type = "button";add.className = "button button-secondary";add.textContent = "+ Add another item";add.onclick = () => {if (lines.children.length >= 50) return;const item = itemTemplate.cloneNode(true) as HTMLLabelElement,quantity = quantityTemplate.cloneNode(true) as HTMLLabelElement,input = quantity.querySelector<HTMLInputElement>('input[name="quantity"]');if (input) input.value = "";lines.append(createLine(item, quantity, true))};submit.insertAdjacentElement("beforebegin", add);submit.disabled=!options.length;
+          }).catch(()=>{const error=document.createElement("p");error.className="form-error";error.textContent="Request units could not be loaded. Refresh the page and try again.";form.append(error)});
         });
       document
         .querySelectorAll<HTMLInputElement>(
