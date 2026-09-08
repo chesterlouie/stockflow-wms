@@ -16,7 +16,7 @@ type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
 };
-type StoreRequestOption={item_id:string;sku:string;description:string;base_uom:string;uom:string;factor:string;barcodes:string[]};
+type StoreRequestOption={item_id:string;sku:string;description:string;item_type:string;base_uom:string;uom:string;factor:string;barcodes:string[];available_kits:string|null};
 
 const hints = new Map<DecodeHintType, unknown>([
   [
@@ -96,6 +96,12 @@ export default function MobileRuntime() {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
     const enhance = () => {
+      if (new URLSearchParams(location.search).get("error") === "kit-stock") {
+        const banner = document.querySelector<HTMLElement>(".form-error");
+        if (banner)
+          banner.textContent =
+            "This VKIT request exceeds the complete kits available from component stock. Replenish its components or reject the request with a note.";
+      }
       const scanLabel = (name: string, title: string, placeholder: string) => {
         const label = document.createElement("label");
         label.textContent = title;
@@ -162,7 +168,7 @@ export default function MobileRuntime() {
               const itemSelect=item.querySelector<HTMLSelectElement>('select[name="itemId"]')!;
               const uomLabel=document.createElement("label"),uomSelect=document.createElement("select"),hint=document.createElement("small");
               uomLabel.textContent="Request unit";uomSelect.name="requestUom";uomSelect.required=true;uomLabel.append(uomSelect,hint);
-              const updateHint=()=>{const selected=options.find(option=>option.item_id===itemSelect.value&&option.uom===uomSelect.value);hint.textContent=selected?`1 ${selected.uom} = ${selected.factor} ${selected.base_uom}${selected.barcodes.length?` · Barcode ${selected.barcodes.join(', ')}`:''}`:"No active unit conversion"},refreshUoms=()=>{const choices=options.filter(option=>option.item_id===itemSelect.value);uomSelect.replaceChildren(...choices.map(option=>{const entry=document.createElement("option");entry.value=option.uom;entry.textContent=`${option.uom} — ${option.factor} ${option.base_uom}${option.barcodes.length?` · ${option.barcodes.join(', ')}`:' · no barcode'}`;return entry}));updateHint()};
+              const updateHint=()=>{const selected=options.find(option=>option.item_id===itemSelect.value&&option.uom===uomSelect.value);hint.textContent=selected?`${selected.item_type==='virtual_kit'?`VKIT · ${selected.available_kits||0} complete kits available · `:''}1 ${selected.uom} = ${selected.factor} ${selected.base_uom}${selected.barcodes.length?` · Barcode ${selected.barcodes.join(', ')}`:''}`:"No active unit conversion"},refreshUoms=()=>{const choices=options.filter(option=>option.item_id===itemSelect.value);uomSelect.replaceChildren(...choices.map(option=>{const entry=document.createElement("option");entry.value=option.uom;entry.textContent=`${option.item_type==='virtual_kit'?'VKIT · ':''}${option.uom} — ${option.factor} ${option.base_uom}${option.barcodes.length?` · ${option.barcodes.join(', ')}`:' · no barcode'}`;return entry}));updateHint()};
               itemSelect.onchange=refreshUoms;uomSelect.onchange=updateHint;refreshUoms();row.append(item, uomLabel, quantity);
               if (removable) {const remove = document.createElement("button");remove.type = "button";remove.className = "button button-secondary";remove.textContent = "Remove";remove.setAttribute("aria-label", "Remove stock request line");remove.onclick = () => row.remove();row.append(remove)}
               return row;
