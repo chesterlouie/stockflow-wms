@@ -40,8 +40,8 @@ WITH facts AS (
 )
 SELECT c.*,
  CASE planning_status WHEN 'blocked' THEN 'Resolve exception' WHEN 'at_risk' THEN 'Expedite and review' WHEN 'ready_to_dispatch' THEN 'Dispatch order' WHEN 'ready_to_wave' THEN 'Add to pick wave' WHEN 'ready_to_release' THEN 'Validate and allocate' WHEN 'waiting_for_stock' THEN 'Track inbound supply' ELSE 'Continue fulfillment' END recommended_action,
- (CASE priority WHEN 'urgent' THEN 400 WHEN 'high' THEN 300 WHEN 'normal' THEN 200 ELSE 100 END
-  + CASE planning_status WHEN 'blocked' THEN 90 WHEN 'at_risk' THEN 80 WHEN 'ready_to_dispatch' THEN 70 WHEN 'ready_to_wave' THEN 60 WHEN 'ready_to_release' THEN 50 ELSE 10 END
-  + greatest(0,least(60,current_date-coalesce(requested_ship_date,current_date))))::integer) priority_score
+ ((CASE priority WHEN 'urgent' THEN 400 WHEN 'high' THEN 300 WHEN 'normal' THEN 200 ELSE 100 END)
+  + (CASE planning_status WHEN 'blocked' THEN 90 WHEN 'at_risk' THEN 80 WHEN 'ready_to_dispatch' THEN 70 WHEN 'ready_to_wave' THEN 60 WHEN 'ready_to_release' THEN 50 ELSE 10 END)
+  + greatest(0,least(60,(current_date-coalesce(requested_ship_date,current_date))::integer)))::integer AS priority_score
 FROM classified c;
 GRANT SELECT ON order_release_plan TO stockflow_app;
