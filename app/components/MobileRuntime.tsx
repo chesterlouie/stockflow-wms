@@ -104,6 +104,10 @@ export default function MobileRuntime() {
         const heading=document.querySelector<HTMLElement>('.page-heading');
         if(heading&&!heading.querySelector('[data-store-vkit-returns]')){const link=document.createElement('a');link.dataset.storeVkitReturns='true';link.className='button button-secondary';link.href='/app/returns/store-vkits';link.textContent='Store VKIT returns';heading.append(link)}
       }
+      if(location.pathname==='/app/returns/store-vkits'){
+        const heading=document.querySelector<HTMLElement>('.page-heading');
+        if(heading&&!heading.querySelector('[data-vkit-reversals]')){const link=document.createElement('a');link.dataset.vkitReversals='true';link.className='button button-secondary';link.href='/app/returns/store-vkits/reversals';link.textContent='Return reversals';heading.append(link)}
+      }
       if (new URLSearchParams(location.search).get("error") === "kit-stock") {
         const banner = document.querySelector<HTMLElement>(".form-error");
         if (banner)
