@@ -1,0 +1,3 @@
+import{getSession}from'../../../lib/auth';import{tenantRows}from'../../../lib/db';
+type Kit={item_id:string;sku:string;description:string;base_uom:string;available_kits:string};
+export async function GET(){const s=await getSession();if(!s)return Response.json({error:'unauthorized'},{status:401});const kits=await tenantRows<Kit>(s.companyId,`SELECT i.id item_id,i.sku,i.description,i.base_uom,k.available_kits::text FROM store_user_assignments a JOIN store_kit_availability k ON k.company_id=a.company_id AND k.store_id=a.store_id JOIN items i ON i.company_id=k.company_id AND i.id=k.kit_item_id WHERE a.company_id=$1 AND a.user_id=$2 ORDER BY i.sku`,[s.companyId,s.userId]);return Response.json({kits},{headers:{'Cache-Control':'no-store'}})}

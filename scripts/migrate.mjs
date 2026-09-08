@@ -70,6 +70,7 @@ const migrations = [
   ["059_warehouse_store_request_review", new URL("../database/migrations/059_warehouse_store_request_review.sql", import.meta.url)],
   ["060_store_transaction_scan_evidence", new URL("../database/migrations/060_store_transaction_scan_evidence.sql", import.meta.url)],
   ["061_store_request_entered_uom", new URL("../database/migrations/061_store_request_entered_uom.sql", import.meta.url)],
+  ["062_store_kit_availability", new URL("../database/migrations/062_store_kit_availability.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);

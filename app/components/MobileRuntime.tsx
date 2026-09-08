@@ -17,6 +17,7 @@ type InstallEvent = Event & {
   userChoice: Promise<{ outcome: string }>;
 };
 type StoreRequestOption={item_id:string;sku:string;description:string;item_type:string;base_uom:string;uom:string;factor:string;barcodes:string[];available_kits:string|null};
+const escapeHtml=(value:string)=>value.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 
 const hints = new Map<DecodeHintType, unknown>([
   [
@@ -113,6 +114,11 @@ export default function MobileRuntime() {
         label.append(input);
         return label;
       };
+      const availability=document.querySelector<HTMLElement>('#availability');
+      if(availability&&!availability.querySelector('[data-store-kit-availability]')){
+        const panel=document.createElement('div');panel.dataset.storeKitAvailability='true';panel.className='knowledge-note';panel.innerHTML='<strong>Virtual kit availability</strong><p>Loading component-driven availability…</p>';availability.append(panel);
+        fetch('/api/store-kit-availability',{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject()).then(({kits}:{kits:Array<{sku:string;description:string;base_uom:string;available_kits:string}>})=>{const body=kits.length?kits.map(kit=>`<tr><td><strong>${escapeHtml(kit.sku)}</strong><small>${escapeHtml(kit.description)}</small></td><td><strong>${escapeHtml(kit.available_kits)} ${escapeHtml(kit.base_uom)}</strong></td></tr>`).join(''):'<tr><td colspan="2" class="empty-cell">No virtual kits are configured.</td></tr>';panel.innerHTML=`<strong>Virtual kit availability</strong><p>Buildable now from approved component stock. Component balances remain the inventory of record.</p><div class="store-table-wrap"><table class="data-table"><thead><tr><th>Virtual kit</th><th>Complete kits</th></tr></thead><tbody>${body}</tbody></table></div>`}).catch(()=>{panel.innerHTML='<strong>Virtual kit availability</strong><p>Availability could not be loaded. Refresh or try again.</p>'});
+      }
       document
         .querySelectorAll<HTMLFormElement>('form[action*="/api/store-deliveries/"]')
         .forEach((form) => {
