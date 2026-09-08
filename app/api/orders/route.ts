@@ -15,7 +15,7 @@ export async function POST(request:Request){
       let customer=p.data.customer?.trim()||'';
       if(p.data.storeId){const store=(await c.query<{name:string}>(`SELECT name FROM requesting_stores WHERE company_id=$1 AND id=$2 AND status='active'`,[s.companyId,p.data.storeId])).rows[0];if(!store)throw new Error('INVALID_STORE');customer=store.name}
       if(!customer)throw new Error('CUSTOMER_REQUIRED');
-      const o=(await c.query(`INSERT INTO sales_orders(company_id,warehouse_id,store_id,order_no,customer,requested_ship_date,priority,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,[s.companyId,p.data.warehouseId,p.data.storeId||null,p.data.orderNo,customer,p.data.requestedShipDate||null,p.data.priority,s.userId])).rows[0];
+      const o=(await c.query(`INSERT INTO sales_orders(company_id,warehouse_id,store_id,order_no,customer,requested_ship_date,priority,created_by,store_approval_status,warehouse_review_status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,[s.companyId,p.data.warehouseId,p.data.storeId||null,p.data.orderNo,customer,p.data.requestedShipDate||null,p.data.priority,s.userId,p.data.storeId?'approved':'not_required',p.data.storeId?'accepted':'not_required'])).rows[0];
       await c.query(`INSERT INTO sales_order_lines(company_id,order_id,line_no,item_id,ordered_quantity,uom) VALUES($1,$2,1,$3,$4,$5)`,[s.companyId,o.id,p.data.itemId,p.data.quantity,p.data.uom]);return o.id;
     });
     return Response.redirect(new URL(`/app/orders/${id}`,request.url),303);

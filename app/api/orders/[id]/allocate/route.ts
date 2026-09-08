@@ -11,7 +11,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   let approvalId='';
   try{
     await withTenant(s.companyId,async c=>{
-      const order=(await c.query(`SELECT * FROM sales_orders WHERE company_id=$1 AND id=$2 AND status='new' AND (store_id IS NULL OR store_approval_status IN('not_required','approved')) FOR UPDATE`,[s.companyId,id])).rows[0];
+      const order=(await c.query(`SELECT * FROM sales_orders WHERE company_id=$1 AND id=$2 AND status='new' AND (store_id IS NULL OR (store_approval_status='approved' AND warehouse_review_status='accepted')) FOR UPDATE`,[s.companyId,id])).rows[0];
       if(!order)throw new Error('INVALID_ORDER');
       await assertWarehouseAccess(c,s,order.warehouse_id);
       const packing=(await c.query(`SELECT id FROM locations WHERE company_id=$1 AND warehouse_id=$2 AND type='packing' AND active=true ORDER BY code LIMIT 1`,[s.companyId,order.warehouse_id])).rows[0];
