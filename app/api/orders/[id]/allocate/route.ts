@@ -60,7 +60,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         }
         await c.query(`UPDATE sales_order_lines SET allocated_quantity=ordered_quantity WHERE id=$1`,[line.id]);
       }
-      if(!approvalId)await c.query(`UPDATE sales_orders SET status='allocated' WHERE id=$1`,[id]);
+      if(!approvalId)await c.query(`UPDATE sales_orders SET status='allocated',backorder_status=CASE WHEN parent_order_id IS NOT NULL THEN 'released' ELSE backorder_status END WHERE id=$1`,[id]);
     });
     return Response.redirect(new URL(approvalId?`/app/approvals?requested=${approvalId}`:`/app/orders/${id}?allocated=1`,request.url),303);
   }catch(e){const m=e instanceof Error?e.message:'';const code=m==='INSUFFICIENT_STOCK'?'stock':m==='KIT_EMPTY'?'kit':'allocate';return Response.redirect(new URL(`/app/orders/${id}?error=${code}`,request.url),303)}

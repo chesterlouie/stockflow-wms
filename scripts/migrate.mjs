@@ -75,6 +75,7 @@ const migrations = [
   ["064_store_vkit_warehouse_receiving", new URL("../database/migrations/064_store_vkit_warehouse_receiving.sql", import.meta.url)],
   ["065_store_vkit_return_reversal", new URL("../database/migrations/065_store_vkit_return_reversal.sql", import.meta.url)],
   ["066_vkit_partial_fulfillment", new URL("../database/migrations/066_vkit_partial_fulfillment.sql", import.meta.url)],
+  ["067_vkit_backorder_lifecycle", new URL("../database/migrations/067_vkit_backorder_lifecycle.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
