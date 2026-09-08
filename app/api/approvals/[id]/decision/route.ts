@@ -259,6 +259,7 @@ async function execute(
     const valid=(await c.query(`SELECT 1 FROM sales_orders o JOIN item_relationships r ON r.company_id=o.company_id WHERE o.company_id=$1 AND o.id=$2 AND o.status='new' AND r.id=$3 AND r.active AND r.approval_required`,[companyId,q.entity_id,x.relationshipId])).rowCount;
     if(!valid)throw new Error("state");
     await c.query(`INSERT INTO order_substitution_approvals(company_id,order_id,relationship_id,approval_request_id,approved_by) VALUES($1,$2,$3,$4,$5) ON CONFLICT(order_id,relationship_id) DO UPDATE SET approval_request_id=excluded.approval_request_id,approved_by=excluded.approved_by,approved_at=now()`,[companyId,q.entity_id,x.relationshipId,q.id,userId]);
+    await c.query(`UPDATE vkit_backorder_substitution_intents SET status='approved',updated_at=now() WHERE company_id=$1 AND order_id=$2 AND relationship_id=$3 AND approval_request_id=$4`,[companyId,q.entity_id,x.relationshipId,q.id]);
     return;
   }
   throw new Error("unsupported");
@@ -302,6 +303,7 @@ export async function POST(
         ],
       );
       if (p.data.decision !== "approved") {
+        if(q.operation_type==="item_substitution")await c.query(`UPDATE vkit_backorder_substitution_intents SET status='rejected',updated_at=now() WHERE company_id=$1 AND order_id=$2 AND approval_request_id=$3`,[s.companyId,q.entity_id,id]);
         await c.query(
           `UPDATE approval_requests SET status=$1,completed_at=now() WHERE id=$2`,
           [p.data.decision, id],

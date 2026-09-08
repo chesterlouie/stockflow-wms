@@ -29,7 +29,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         }
         for(const demand of demands){
           let remaining=demand.quantity;
-          const substitutes=(await c.query(`SELECT r.target_item_id AS item_id,r.conversion_ratio,true AS substitute FROM item_relationships r JOIN items i ON i.company_id=r.company_id AND i.id=r.target_item_id AND i.status='active' WHERE r.company_id=$1 AND r.source_item_id=$2 AND r.relationship_type IN('substitute','reciprocal_substitute','superseded_by') AND r.active AND (NOT r.approval_required OR EXISTS(SELECT 1 FROM order_substitution_approvals osa WHERE osa.company_id=r.company_id AND osa.order_id=$3 AND osa.relationship_id=r.id)) AND (r.effective_from IS NULL OR r.effective_from<=current_date) AND (r.effective_to IS NULL OR r.effective_to>=current_date) ORDER BY r.priority,r.created_at`,[s.companyId,demand.itemId,id])).rows;
+          const substitutes=(await c.query(`SELECT r.target_item_id AS item_id,r.conversion_ratio,true AS substitute FROM item_relationships r JOIN items i ON i.company_id=r.company_id AND i.id=r.target_item_id AND i.status='active' WHERE r.company_id=$1 AND r.source_item_id=$2 AND r.relationship_type IN('substitute','reciprocal_substitute','superseded_by') AND r.active AND (NOT r.approval_required OR EXISTS(SELECT 1 FROM order_substitution_approvals osa WHERE osa.company_id=r.company_id AND osa.order_id=$3 AND osa.relationship_id=r.id)) AND (r.effective_from IS NULL OR r.effective_from<=current_date) AND (r.effective_to IS NULL OR r.effective_to>=current_date) ORDER BY CASE WHEN EXISTS(SELECT 1 FROM vkit_backorder_substitution_intents v WHERE v.company_id=r.company_id AND v.order_id=$3 AND v.relationship_id=r.id AND v.status='approved') THEN 0 ELSE 1 END,r.priority,r.created_at`,[s.companyId,demand.itemId,id])).rows;
           const candidates=[{item_id:demand.itemId,conversion_ratio:1,substitute:false},...substitutes];
           for(const candidate of candidates){
             if(remaining<=0)break;
@@ -60,7 +60,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
         }
         await c.query(`UPDATE sales_order_lines SET allocated_quantity=ordered_quantity WHERE id=$1`,[line.id]);
       }
-      if(!approvalId)await c.query(`UPDATE sales_orders SET status='allocated',backorder_status=CASE WHEN parent_order_id IS NOT NULL THEN 'released' ELSE backorder_status END WHERE id=$1`,[id]);
+      if(!approvalId){await c.query(`UPDATE vkit_backorder_substitution_intents SET status='applied',updated_at=now() WHERE company_id=$1 AND order_id=$2 AND status='approved'`,[s.companyId,id]);await c.query(`UPDATE sales_orders SET status='allocated',backorder_status=CASE WHEN parent_order_id IS NOT NULL THEN 'released' ELSE backorder_status END WHERE id=$1`,[id])}
     });
     return Response.redirect(new URL(approvalId?`/app/approvals?requested=${approvalId}`:`/app/orders/${id}?allocated=1`,request.url),303);
   }catch(e){const m=e instanceof Error?e.message:'';const code=m==='INSUFFICIENT_STOCK'?'stock':m==='KIT_EMPTY'?'kit':'allocate';return Response.redirect(new URL(`/app/orders/${id}?error=${code}`,request.url),303)}

@@ -78,6 +78,7 @@ const migrations = [
   ["067_vkit_backorder_lifecycle", new URL("../database/migrations/067_vkit_backorder_lifecycle.sql", import.meta.url)],
   ["068_vkit_backorder_exceptions", new URL("../database/migrations/068_vkit_backorder_exceptions.sql", import.meta.url)],
   ["069_vkit_backorder_escalation", new URL("../database/migrations/069_vkit_backorder_escalation.sql", import.meta.url)],
+  ["070_vkit_backorder_substitution", new URL("../database/migrations/070_vkit_backorder_substitution.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
