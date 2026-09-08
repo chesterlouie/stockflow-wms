@@ -80,6 +80,7 @@ const migrations = [
   ["069_vkit_backorder_escalation", new URL("../database/migrations/069_vkit_backorder_escalation.sql", import.meta.url)],
   ["070_vkit_backorder_substitution", new URL("../database/migrations/070_vkit_backorder_substitution.sql", import.meta.url)],
   ["071_vkit_substitution_chains", new URL("../database/migrations/071_vkit_substitution_chains.sql", import.meta.url)],
+  ["072_shortage_sourcing_recommendations", new URL("../database/migrations/072_shortage_sourcing_recommendations.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
