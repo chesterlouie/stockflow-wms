@@ -137,6 +137,51 @@ export default function MobileRuntime() {
           item?.insertAdjacentElement("afterend", scanLabel("barcode", "Confirm item barcode or SKU", "Scan the selected item"));
         });
       document
+        .querySelectorAll<HTMLFormElement>('form[action$="/api/store-requests"]')
+        .forEach((form) => {
+          if (form.dataset.batchLines) return;
+          form.dataset.batchLines = "true";
+          const itemLabel = form.querySelector<HTMLSelectElement>('select[name="itemId"]')?.closest("label");
+          const quantityLabel = form.querySelector<HTMLInputElement>('input[name="quantity"]')?.closest("label");
+          const dateLabel = form.querySelector<HTMLInputElement>('input[name="requestedShipDate"]')?.closest("label");
+          const submit = form.querySelector<HTMLButtonElement>('button[type="submit"],button:not([type])');
+          if (!itemLabel || !quantityLabel || !dateLabel || !submit) return;
+          const itemTemplate = itemLabel.cloneNode(true) as HTMLLabelElement;
+          const quantityTemplate = quantityLabel.cloneNode(true) as HTMLLabelElement;
+          const lines = document.createElement("div");
+          lines.className = "store-request-lines";
+          const createLine = (item: HTMLLabelElement, quantity: HTMLLabelElement, removable: boolean) => {
+            const row = document.createElement("div");
+            row.className = "form-row store-request-line";
+            row.append(item, quantity);
+            if (removable) {
+              const remove = document.createElement("button");
+              remove.type = "button";
+              remove.className = "button button-secondary";
+              remove.textContent = "Remove";
+              remove.setAttribute("aria-label", "Remove stock request line");
+              remove.onclick = () => row.remove();
+              row.append(remove);
+            }
+            return row;
+          };
+          lines.append(createLine(itemLabel, quantityLabel, false));
+          dateLabel.parentElement?.insertAdjacentElement("beforebegin", lines);
+          const add = document.createElement("button");
+          add.type = "button";
+          add.className = "button button-secondary";
+          add.textContent = "+ Add another item";
+          add.onclick = () => {
+            if (lines.children.length >= 50) return;
+            const item = itemTemplate.cloneNode(true) as HTMLLabelElement;
+            const quantity = quantityTemplate.cloneNode(true) as HTMLLabelElement;
+            const input = quantity.querySelector<HTMLInputElement>('input[name="quantity"]');
+            if (input) input.value = "";
+            lines.append(createLine(item, quantity, true));
+          };
+          submit.insertAdjacentElement("beforebegin", add);
+        });
+      document
         .querySelectorAll<HTMLInputElement>(
           'input[data-scan-field="true"],input[name="barcode"],input[name="receiptBarcode"],input[name="locationCode"],input[name="destinationCode"],input[name="scan"],input[name="trackingNumber"]',
         )
