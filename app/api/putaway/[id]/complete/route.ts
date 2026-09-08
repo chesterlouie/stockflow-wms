@@ -1,6 +1,7 @@
 import {getSession} from '../../../../../lib/auth';
 import {withTenant} from '../../../../../lib/db';
 import {assertWarehouseAccess} from '../../../../../lib/warehouse-access';
+import {processReplenishmentAllocationJobs} from '../../../../../lib/replenishment-auto-allocation';
 
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   const s=await getSession();if(!s)return Response.redirect(new URL('/signin',request.url),303);
@@ -21,6 +22,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       const status=received<Number(t.expected_quantity)?'partial':pending?'putaway':'completed';
       await c.query(`UPDATE inbound_receipt_lines SET status=$1 WHERE id=$2`,[status,t.receipt_line_id]);
       await c.query(`UPDATE inbound_receipts SET status=$1 WHERE id=$2`,[status,t.receipt_id]);
+      await processReplenishmentAllocationJobs(c,s.companyId,t.warehouse_id,s.userId);
       return t.receipt_id;
     });
     return Response.redirect(new URL(`/app/receiving/${receiptId}?putaway=1`,request.url),303);
