@@ -25,6 +25,7 @@ const managerPages=[
   '/app/counts','/app/replenishment','/app/forecasting','/app/traceability','/app/returns','/app/orders',
   '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile','/app/delivery-tracking','/app/freight',
   '/app/manifests','/app/labor','/app/reports','/app/report-automation','/app/delivery-history','/app/restricted',
+  '/app/carrier-scorecards',
 ];
 
 const viewerPages=[
