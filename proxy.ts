@@ -13,6 +13,7 @@ const operatorPages=[
   '/app/fulfillment/mobile',
   '/app/packing/cartons',
   '/app/dispatch/mobile',
+  '/app/delivery-claims',
   '/app/restricted',
 ];
 
@@ -39,6 +40,7 @@ const operatorMutationPrefixes=[
   '/api/picks/',
   '/api/packing/',
   '/api/cartons',
+  '/api/delivery-claims',
 ];
 
 function isOperatorPage(pathname:string){
