@@ -85,6 +85,7 @@ const migrations = [
   ["074_replenishment_auto_allocation", new URL("../database/migrations/074_replenishment_auto_allocation.sql", import.meta.url)],
   ["075_fulfillment_operations_control", new URL("../database/migrations/075_fulfillment_operations_control.sql", import.meta.url)],
   ["076_order_release_planning", new URL("../database/migrations/076_order_release_planning.sql", import.meta.url)],
+  ["077_carrier_delivery_tracking", new URL("../database/migrations/077_carrier_delivery_tracking.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);

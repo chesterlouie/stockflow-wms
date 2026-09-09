@@ -19,10 +19,10 @@ const operatorPages=[
 const operatorPagePrefixes=['/app/receiving/','/app/cartons/'];
 
 const managerPages=[
-  '/app/dashboard','/app/help','/app/approvals','/app/exceptions','/app/items','/app/categories','/app/suppliers','/app/stores','/app/setup',
+  '/app/dashboard','/app/help','/app/approvals','/app/exceptions','/app/items','/app/categories','/app/suppliers','/app/stores','/app/carriers','/app/setup',
   '/app/purchasing','/app/docks','/app/receiving','/app/putaway/mobile','/app/cross-dock','/app/inventory',
   '/app/counts','/app/replenishment','/app/forecasting','/app/traceability','/app/returns','/app/orders',
-  '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile',
+  '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile','/app/delivery-tracking',
   '/app/manifests','/app/labor','/app/reports','/app/report-automation','/app/delivery-history','/app/restricted',
 ];
 

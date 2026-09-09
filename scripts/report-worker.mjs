@@ -23,9 +23,10 @@ if (!deliveryEnabled) {
   await processCountSchedules();
   await processVkitBackorders();
   await processOperationalExceptions();
+  await processDeliveryExceptions();
   const safeTimer = setInterval(
     () =>
-      Promise.all([createAlerts(), processApprovals(),processCountSchedules(),processVkitBackorders(),processOperationalExceptions()]).catch(console.error),
+      Promise.all([createAlerts(), processApprovals(),processCountSchedules(),processVkitBackorders(),processOperationalExceptions(),processDeliveryExceptions()]).catch(console.error),
     60000,
   );
   const safeStop = async () => {
@@ -100,6 +101,7 @@ async function cycle() {
     await processCountSchedules();
     await processVkitBackorders();
     await processOperationalExceptions();
+    await processDeliveryExceptions();
   } finally {
     await client.query(`SELECT pg_advisory_unlock(9042026)`);
   }
@@ -231,3 +233,4 @@ process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
 await cycle();
 const timer = setInterval(() => cycle().catch(console.error), 60000);
+async function processDeliveryExceptions(){if(!(await client.query(`SELECT pg_try_advisory_lock(9042077) ok`)).rows[0].ok)return;try{await client.query(`INSERT INTO operational_exceptions(company_id,domain,entity_type,entity_id,order_id,warehouse_id,store_id,category,severity,summary,recommended_action,sla_due_at) SELECT sh.company_id,'dispatch','shipment',sh.id,o.id,o.warehouse_id,o.store_id,'late_delivery',CASE WHEN sh.expected_delivery_at<now()-interval '24 hours' THEN 'critical' ELSE 'high' END,sh.shipment_no||' missed its expected delivery time.','Contact the carrier, update the milestone, and notify the destination Store.',now()+interval '4 hours' FROM shipments sh JOIN sales_orders o ON o.id=sh.order_id WHERE sh.status='dispatched' AND sh.delivery_status NOT IN('delivered','returned') AND sh.expected_delivery_at<now() ON CONFLICT(company_id,domain,entity_type,entity_id,category) WHERE status<>'resolved' DO UPDATE SET severity=excluded.severity,summary=excluded.summary,updated_at=now()`)}finally{await client.query(`SELECT pg_advisory_unlock(9042077)`)}}
