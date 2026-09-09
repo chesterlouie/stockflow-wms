@@ -24,9 +24,10 @@ if (!deliveryEnabled) {
   await processVkitBackorders();
   await processOperationalExceptions();
   await processDeliveryExceptions();
+  await processCarrierTenderExceptions();
   const safeTimer = setInterval(
     () =>
-      Promise.all([createAlerts(), processApprovals(),processCountSchedules(),processVkitBackorders(),processOperationalExceptions(),processDeliveryExceptions()]).catch(console.error),
+      Promise.all([createAlerts(), processApprovals(),processCountSchedules(),processVkitBackorders(),processOperationalExceptions(),processDeliveryExceptions(),processCarrierTenderExceptions()]).catch(console.error),
     60000,
   );
   const safeStop = async () => {
@@ -102,6 +103,7 @@ async function cycle() {
     await processVkitBackorders();
     await processOperationalExceptions();
     await processDeliveryExceptions();
+    await processCarrierTenderExceptions();
   } finally {
     await client.query(`SELECT pg_advisory_unlock(9042026)`);
   }
@@ -233,4 +235,5 @@ process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
 await cycle();
 const timer = setInterval(() => cycle().catch(console.error), 60000);
+async function processCarrierTenderExceptions(){if(!(await client.query(`SELECT pg_try_advisory_lock(9042078) ok`)).rows[0].ok)return;try{await client.query(`INSERT INTO operational_exceptions(company_id,domain,entity_type,entity_id,order_id,warehouse_id,store_id,category,severity,summary,recommended_action,sla_due_at) SELECT a.company_id,'dispatch','carrier_assignment',a.id,o.id,o.warehouse_id,o.store_id,'late_carrier_pickup',CASE WHEN a.promised_dispatch_at<now()-interval '4 hours' THEN 'critical' ELSE 'high' END,o.order_no||' missed its planned carrier handover.','Confirm carrier capacity, retender the order, or record the actual handover.',now()+interval '2 hours' FROM order_carrier_assignments a JOIN sales_orders o ON o.id=a.order_id WHERE a.status IN('planned','tendered','accepted') AND a.promised_dispatch_at<now() ON CONFLICT(company_id,domain,entity_type,entity_id,category) WHERE status<>'resolved' DO UPDATE SET severity=excluded.severity,summary=excluded.summary,updated_at=now()`)}finally{await client.query(`SELECT pg_advisory_unlock(9042078)`)}}
 async function processDeliveryExceptions(){if(!(await client.query(`SELECT pg_try_advisory_lock(9042077) ok`)).rows[0].ok)return;try{await client.query(`INSERT INTO operational_exceptions(company_id,domain,entity_type,entity_id,order_id,warehouse_id,store_id,category,severity,summary,recommended_action,sla_due_at) SELECT sh.company_id,'dispatch','shipment',sh.id,o.id,o.warehouse_id,o.store_id,'late_delivery',CASE WHEN sh.expected_delivery_at<now()-interval '24 hours' THEN 'critical' ELSE 'high' END,sh.shipment_no||' missed its expected delivery time.','Contact the carrier, update the milestone, and notify the destination Store.',now()+interval '4 hours' FROM shipments sh JOIN sales_orders o ON o.id=sh.order_id WHERE sh.status='dispatched' AND sh.delivery_status NOT IN('delivered','returned') AND sh.expected_delivery_at<now() ON CONFLICT(company_id,domain,entity_type,entity_id,category) WHERE status<>'resolved' DO UPDATE SET severity=excluded.severity,summary=excluded.summary,updated_at=now()`)}finally{await client.query(`SELECT pg_advisory_unlock(9042077)`)}}
