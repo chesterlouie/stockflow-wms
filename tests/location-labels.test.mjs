@@ -7,5 +7,5 @@ test('warehouse setup provides tenant-safe individual and bulk location labels',
  assert.match(setup,/Print all locations/);assert.match(setup,/Print label/);
  assert.match(one,/l\.company_id=\$1 AND l\.id=\$2/);assert.match(one,/qrcode/);assert.match(one,/code128/);
  assert.match(bulk,/l\.company_id=\$1 AND l\.warehouse_id=\$2/);assert.match(bulk,/l\.active=true/);
- assert.match(six,/How to print location labels/);assert.match(six,/Update preview/);assert.match(six,/100% scale/);assert.match(seven,/See Chapter 6/);
+ assert.match(six,/Location label printing — exact steps/);assert.match(six,/Update preview/);assert.match(six,/100% scale/);assert.match(seven,/open Chapter 6/);
 });

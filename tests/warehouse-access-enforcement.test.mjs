@@ -74,8 +74,8 @@ test('outbound queues list only records in assigned warehouses',async()=>{
   for(const path of pages){
     const source=await read(path);
     assert.match(source,/user_warehouse_assignments/,`${path} must filter by warehouse assignment`);
-    assert.match(source,/s\.role/,`${path} must preserve the owner all-warehouse override`);
-    assert.match(source,/s\.userId/,`${path} must bind the signed-in user`);
+    assert.match(source,/(?:s|session)\.role/,`${path} must preserve the owner all-warehouse override`);
+    assert.match(source,/(?:s|session)\.userId/,`${path} must bind the signed-in user`);
   }
 });
 
