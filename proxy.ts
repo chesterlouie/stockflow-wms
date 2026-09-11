@@ -27,6 +27,7 @@ const managerPages=[
   '/app/manifests','/app/labor','/app/reports','/app/report-automation','/app/delivery-history','/app/restricted',
   '/app/carrier-scorecards',
   '/app/carrier-remediations',
+  '/app/carrier-awards',
 ];
 
 const viewerPages=[
