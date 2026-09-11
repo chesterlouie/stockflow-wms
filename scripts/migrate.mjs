@@ -97,6 +97,7 @@ const migrations = [
   ["086_carrier_sla_remediation", new URL("../database/migrations/086_carrier_sla_remediation.sql", import.meta.url)],
   ["087_carrier_award_recommendations", new URL("../database/migrations/087_carrier_award_recommendations.sql", import.meta.url)],
   ["088_carrier_capacity_tenders", new URL("../database/migrations/088_carrier_capacity_tenders.sql", import.meta.url)],
+  ["089_carrier_tender_automation", new URL("../database/migrations/089_carrier_tender_automation.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
