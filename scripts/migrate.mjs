@@ -93,6 +93,7 @@ const migrations = [
   ["082_delivery_claims", new URL("../database/migrations/082_delivery_claims.sql", import.meta.url)],
   ["083_carrier_scorecards", new URL("../database/migrations/083_carrier_scorecards.sql", import.meta.url)],
   ["084_carrier_sla_governance", new URL("../database/migrations/084_carrier_sla_governance.sql", import.meta.url)],
+  ["085_carrier_sla_inbox", new URL("../database/migrations/085_carrier_sla_inbox.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
