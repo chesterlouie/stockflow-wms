@@ -28,6 +28,7 @@ const managerPages=[
   '/app/carrier-scorecards',
   '/app/carrier-remediations',
   '/app/carrier-awards',
+  '/app/carrier-tenders',
 ];
 
 const viewerPages=[
