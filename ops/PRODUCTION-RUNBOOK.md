@@ -13,6 +13,8 @@ Start with `docker compose --env-file .env.production -f compose.production.yml 
 
 After an upgrade, check `https://stockflow.local/api/ready`. A healthy response says `ready`, `connected`, and shows the latest migration.
 
+Production is not a test database. Complete migration replay, rollback, RLS, concurrency, and reconciliation tests in an isolated environment before upgrade. Record the promoted Git revision, migration, readiness result, backup reference, QA evidence, and handbook/knowledge-base version in the release record.
+
 ## Trust HTTPS on warehouse phones
 
 Caddy creates a private local certificate authority. Export its root certificate from the `caddy_data` volume and install it as trusted on managed warehouse phones. Camera scanning requires trusted HTTPS. For unmanaged or internet-accessible devices, use a real DNS name and publicly trusted certificate instead of `tls internal`.

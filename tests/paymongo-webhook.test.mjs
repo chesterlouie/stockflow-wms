@@ -40,7 +40,10 @@ try {
     assert.equal(second.status, 200);
     const company = (await admin.query("SELECT subscription_status,access_status,billing_access_suspended,payment_failure_count FROM companies WHERE id=$1", [companyId])).rows[0];
     assert.deepEqual(company, { subscription_status: "active", access_status: "active", billing_access_suspended: false, payment_failure_count: 0 });
+    await admin.query("BEGIN");
+    await admin.query("SELECT set_config('app.company_id',$1,true)", [companyId]);
     const invoices = await admin.query("SELECT amount::text,status FROM billing_invoices WHERE company_id=$1", [companyId]);
+    await admin.query("ROLLBACK");
     assert.equal(invoices.rowCount, 1);
     assert.deepEqual(invoices.rows[0], { amount: "1490.00", status: "paid" });
   });

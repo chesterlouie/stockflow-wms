@@ -12,6 +12,12 @@
 
 Load `.env.staging`, then run `pnpm run config:validate:staging`. Validation requires HTTPS, a matching domain, an immutable container-image digest, TLS-protected non-local database URLs, and strong secrets.
 
+## Database integration gate
+
+Before staging deployment, replay every migration through the repository's latest numbered migration against an isolated local PostgreSQL database. Configure the restricted application role, then run the RLS/tenant-isolation, UOM, purchasing, payment-webhook, readiness, concurrency, and inventory-reconciliation tests with `.env.local`.
+
+Never run fixture, rollback, destructive, or concurrency tests against the shared Neon QA database. If Docker or native PostgreSQL is unavailable, record the database integration gate as blocked; do not replace the local URL with Neon credentials. The readiness test derives the expected version from `database/migrations` and accepts HTTPS staging URLs or an explicit `localhost` development URL.
+
 ## Release
 
 The GitHub staging-readiness workflow runs builds and security checks and publishes a commit-tagged image to GHCR after changes reach `main`. Resolve that tag to its `sha256` digest before deployment.
@@ -37,3 +43,5 @@ Run `ops/monitor-staging.ps1` every five minutes from an external monitor. Check
 ## Promotion rule
 
 Promote a release only after `pnpm run staging:full` passes, a backup exists, the staging health check remains green, mobile scanning is tested on a physical phone, and the main receiving-to-dispatch workflow has been accepted by an operations user.
+
+Record the deployed Git revision, migration reported by `/api/ready`, test evidence, deployment result, and documentation changes in the technical handbook after every deployment.
