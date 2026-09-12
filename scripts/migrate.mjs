@@ -102,6 +102,7 @@ const migrations = [
   ["091_tender_dispatch_enforcement", new URL("../database/migrations/091_tender_dispatch_enforcement.sql", import.meta.url)],
   ["092_delivery_confirmation_closure", new URL("../database/migrations/092_delivery_confirmation_closure.sql", import.meta.url)],
   ["093_delivery_discrepancy_resolution", new URL("../database/migrations/093_delivery_discrepancy_resolution.sql", import.meta.url)],
+  ["094_resolution_completion_reconciliation", new URL("../database/migrations/094_resolution_completion_reconciliation.sql", import.meta.url)],
 ];
 const client = new pg.Client({ connectionString, database: databaseName });
 console.log(`Connecting to configured database ${client.connectionParameters.database}.`);
