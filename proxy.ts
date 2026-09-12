@@ -13,6 +13,7 @@ const operatorPages=[
   '/app/fulfillment/mobile',
   '/app/packing/cartons',
   '/app/dispatch/mobile',
+  '/app/delivery-resolutions',
   '/app/delivery-claims',
   '/app/restricted',
 ];
@@ -23,7 +24,7 @@ const managerPages=[
   '/app/dashboard','/app/help','/app/approvals','/app/exceptions','/app/items','/app/categories','/app/suppliers','/app/stores','/app/carriers','/app/setup',
   '/app/purchasing','/app/docks','/app/receiving','/app/putaway/mobile','/app/cross-dock','/app/inventory',
   '/app/counts','/app/replenishment','/app/forecasting','/app/traceability','/app/returns','/app/orders',
-  '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile','/app/delivery-tracking','/app/freight',
+  '/app/waves','/app/fulfillment/mobile','/app/packing/cartons','/app/cartons','/app/dispatch/mobile','/app/delivery-tracking','/app/delivery-resolutions','/app/freight',
   '/app/manifests','/app/labor','/app/reports','/app/report-automation','/app/delivery-history','/app/restricted',
   '/app/carrier-scorecards',
   '/app/carrier-remediations',
@@ -45,6 +46,7 @@ const operatorMutationPrefixes=[
   '/api/packing/',
   '/api/cartons',
   '/api/delivery-claims',
+  '/api/delivery-resolutions',
 ];
 
 function isOperatorPage(pathname:string){
@@ -80,7 +82,7 @@ export async function proxy(request:NextRequest){
   }
   const mutation=!['GET','HEAD','OPTIONS'].includes(request.method);
   const publicAccountMutation=pathname.startsWith('/api/auth/')||/^\/api\/invitations\/[^/]+\/accept$/.test(pathname);
-  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read'||pathname.startsWith('/api/support/')||pathname.startsWith('/api/store-requests')||pathname.startsWith('/api/store-deliveries/')||pathname.startsWith('/api/store-transactions')||pathname.startsWith('/api/store-receipts/')||pathname.startsWith('/api/store-notifications/')||pathname==='/api/store-locations'||pathname==='/api/store-counts';
+  const viewerPersonalMutation=pathname.startsWith('/api/account/')||pathname==='/api/auth/signout'||pathname==='/api/approvals/notifications/read'||pathname.startsWith('/api/support/')||pathname.startsWith('/api/store-requests')||pathname.startsWith('/api/store-deliveries/')||pathname.startsWith('/api/delivery-resolutions/lines/')||pathname.startsWith('/api/store-transactions')||pathname.startsWith('/api/store-receipts/')||pathname.startsWith('/api/store-notifications/')||pathname==='/api/store-locations'||pathname==='/api/store-counts';
   const managerRestrictedMutation=['/api/billing','/api/integrations','/api/users','/api/invitations','/api/warehouses','/api/admin'].some(path=>pathname===path||pathname.startsWith(`${path}/`));
   const deniedMutation=!publicAccountMutation&&(role==='viewer'&&!viewerPersonalMutation||role==='operator'&&!isOperatorMutation(pathname)||role==='manager'&&managerRestrictedMutation);
   if(pathname.startsWith('/api/')&&mutation&&deniedMutation){
