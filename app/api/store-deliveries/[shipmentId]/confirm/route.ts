@@ -1,0 +1,41 @@
+import { z } from 'zod';
+import { getSession } from '../../../../../lib/auth';
+import { withTenant } from '../../../../../lib/db';
+import { notifyStoreManagers } from '../../../../../lib/store-notifications';
+
+const schema=z.object({deliveredAt:z.string().min(1),recipientName:z.string().trim().min(2).max(150),proofType:z.enum(['photo','signature','document','carrier_pod']),proofReference:z.string().trim().min(2).max(500),signatureName:z.string().trim().max(150).optional(),notes:z.string().trim().max(1000).optional()}).refine(x=>x.proofType!=='signature'||Boolean(x.signatureName),{message:'Signature name required'});
+
+export async function POST(request:Request,{params}:{params:Promise<{shipmentId:string}>}){
+  const session=await getSession();
+  if(!session)return Response.redirect(new URL('/signin?returnTo=/store-portal/deliveries',request.url),303);
+  const {shipmentId}=await params;
+  const parsed=schema.safeParse(Object.fromEntries(await request.formData()));
+  if(!parsed.success)return Response.redirect(new URL('/store-portal/deliveries?error=proof',request.url),303);
+  try{
+    await withTenant(session.companyId,async client=>{
+      const shipment=(await client.query(`SELECT sh.id,sh.shipment_no,sh.order_id,o.order_no,o.store_id,o.warehouse_id,r.id receipt_id,r.received_by FROM shipments sh JOIN sales_orders o ON o.id=sh.order_id JOIN store_user_assignments a ON a.company_id=o.company_id AND a.store_id=o.store_id AND a.user_id=$2 AND a.store_role IN('store_operator','store_manager') JOIN store_delivery_receipts r ON r.company_id=sh.company_id AND r.shipment_id=sh.id WHERE sh.company_id=$1 AND sh.id=$3 AND sh.status='dispatched' FOR UPDATE OF sh,r`,[session.companyId,session.userId,shipmentId])).rows[0];
+      if(!shipment)throw new Error('shipment');
+      const lines=(await client.query(`SELECT rl.id,rl.item_id,rl.uom,rl.expected_quantity,rl.accepted_quantity,rl.short_quantity,rl.damaged_quantity,i.standard_cost FROM store_delivery_receipt_lines rl JOIN items i ON i.company_id=rl.company_id AND i.id=rl.item_id WHERE rl.company_id=$1 AND rl.receipt_id=$2 ORDER BY rl.id FOR UPDATE OF rl`,[session.companyId,shipment.receipt_id])).rows;
+      if(!lines.length)throw new Error('receipt');
+      const short=lines.some(x=>Number(x.short_quantity)>0),damaged=lines.some(x=>Number(x.damaged_quantity)>0);
+      const outcome=short&&damaged?'short_and_damaged':short?'short':damaged?'damaged':'complete';
+      const status=outcome==='complete'?'closed':'pending_review';
+      const confirmation=(await client.query(`INSERT INTO shipment_delivery_confirmations(company_id,shipment_id,store_id,receipt_id,status,outcome,delivered_at,recipient_name,proof_type,proof_reference,signature_name,notes,submitted_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,[session.companyId,shipmentId,shipment.store_id,shipment.receipt_id,status,outcome,parsed.data.deliveredAt,parsed.data.recipientName,parsed.data.proofType,parsed.data.proofReference,parsed.data.signatureName||null,parsed.data.notes||null,session.userId])).rows[0];
+      for(const line of lines)await client.query(`INSERT INTO shipment_delivery_confirmation_lines(company_id,confirmation_id,item_id,source_receipt_line_id,expected_quantity,accepted_quantity,short_quantity,damaged_quantity,uom) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,[session.companyId,confirmation.id,line.item_id,line.id,line.expected_quantity,line.accepted_quantity,line.short_quantity,line.damaged_quantity,line.uom]);
+      await client.query(`INSERT INTO shipment_delivery_confirmation_events(company_id,confirmation_id,event_type,to_status,note,created_by) VALUES($1,$2,'submitted',$3,$4,$5)`,[session.companyId,confirmation.id,status,parsed.data.notes||null,session.userId]);
+      await client.query(`INSERT INTO shipment_tracking_events(company_id,shipment_id,status,event_at,note,recipient_name,proof_reference,created_by) VALUES($1,$2,'delivered',$3,$4,$5,$6,$7)`,[session.companyId,shipmentId,parsed.data.deliveredAt,parsed.data.notes||'Store delivery confirmed',parsed.data.recipientName,parsed.data.proofReference,session.userId]);
+      await client.query(`UPDATE shipments SET delivery_status='delivered',delivered_at=$1,recipient_name=$2,proof_reference=$3 WHERE id=$4`,[parsed.data.deliveredAt,parsed.data.recipientName,parsed.data.proofReference,shipmentId]);
+      if(status==='pending_review'){
+        const claimNumber=`DCL-POD-${String(shipment.shipment_no).replace(/[^A-Za-z0-9-]/g,'-')}`;
+        const claim=(await client.query(`INSERT INTO delivery_claims(company_id,claim_number,shipment_id,claim_type,status,description,claimed_amount,incident_at,evidence_due_at,created_by) VALUES($1,$2,$3,$4,'draft',$5,$6,$7,now()+(SELECT delivery_claim_sla_days FROM companies WHERE id=$1)*interval '1 day',$8) ON CONFLICT(company_id,claim_number) DO UPDATE SET description=excluded.description RETURNING id`,[session.companyId,claimNumber,shipmentId,short?'short':'damaged',`${shipment.shipment_no} Store-confirmed ${outcome}`,lines.reduce((n,x)=>n+(Number(x.short_quantity)+Number(x.damaged_quantity))*Number(x.standard_cost||0),0),parsed.data.deliveredAt,session.userId])).rows[0];
+        for(const line of lines){const quantity=Number(line.short_quantity)+Number(line.damaged_quantity);if(quantity>0)await client.query(`INSERT INTO delivery_claim_lines(company_id,claim_id,item_id,quantity,uom,unit_value,condition_code,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(claim_id,item_id,condition_code) DO UPDATE SET quantity=excluded.quantity,notes=excluded.notes`,[session.companyId,claim.id,line.item_id,quantity,line.uom,line.standard_cost||0,Number(line.short_quantity)>0?'short':'damaged','Created from Store delivery confirmation']);}
+        await client.query(`INSERT INTO delivery_claim_evidence(company_id,claim_id,evidence_type,reference,description,created_by) VALUES($1,$2,'delivery_proof',$3,'Store proof-of-delivery evidence',$4)`,[session.companyId,claim.id,parsed.data.proofReference,session.userId]);
+        await client.query(`INSERT INTO operational_exceptions(company_id,domain,entity_type,entity_id,order_id,warehouse_id,store_id,category,severity,summary,recommended_action,sla_due_at) VALUES($1,'dispatch','shipment',$2,$3,$4,$5,'delivery_discrepancy','high',$6,'Store Manager reviews proof and warehouse manages the generated delivery claim.',now()+interval '4 hours') ON CONFLICT(company_id,domain,entity_type,entity_id,category) WHERE status<>'resolved' DO UPDATE SET summary=excluded.summary,updated_at=now()`,[session.companyId,shipmentId,shipment.order_id,shipment.warehouse_id,shipment.store_id,`${shipment.shipment_no} was confirmed with ${outcome}.`]);
+        await notifyStoreManagers(client,{companyId:session.companyId,storeId:shipment.store_id,eventKey:`delivery-confirmation:${confirmation.id}:pending`,title:'Delivery discrepancy needs approval',message:`${shipment.shipment_no} has ${outcome.replaceAll('_',' ')} evidence to review.`,entityType:'shipment_delivery_confirmation',entityId:confirmation.id});
+        await client.query(`INSERT INTO warehouse_notifications(company_id,warehouse_id,user_id,event_key,title,message,order_id) SELECT $1,$2,m.user_id,$3,'Delivery discrepancy reported',$4,$5 FROM company_members m WHERE m.company_id=$1 AND m.role IN('owner','admin','manager') AND (m.role='owner' OR EXISTS(SELECT 1 FROM user_warehouse_assignments a WHERE a.company_id=$1 AND a.user_id=m.user_id AND a.warehouse_id=$2)) ON CONFLICT DO NOTHING`,[session.companyId,shipment.warehouse_id,`delivery-confirmation:${confirmation.id}:discrepancy`,`${shipment.shipment_no} has ${outcome.replaceAll('_',' ')} evidence and a draft claim.`,shipment.order_id]);
+      }
+      await client.query(`INSERT INTO audit_logs(company_id,user_id,action,entity_type,entity_id,details) VALUES($1,$2,'shipment_delivery_confirmation_submitted','shipment_delivery_confirmation',$3,$4::jsonb)`,[session.companyId,session.userId,confirmation.id,JSON.stringify({shipmentId,outcome,status,proofType:parsed.data.proofType})]);
+    });
+    return Response.redirect(new URL('/store-portal/deliveries?confirmed=1',request.url),303);
+  }catch{return Response.redirect(new URL('/store-portal/deliveries?error=confirmation',request.url),303)}
+}
